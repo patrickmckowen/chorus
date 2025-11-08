@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { SafeAreaView, StyleSheet, Text, View, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -10,6 +10,11 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Welcome'>;
 
 export default function WelcomeScreen() {
 	const navigation = useNavigation<NavigationProp>();
+	const [isAppleAuthAvailable, setIsAppleAuthAvailable] = useState(false);
+
+	useEffect(() => {
+		AppleAuthentication.isAvailableAsync().then(setIsAppleAuthAvailable);
+	}, []);
 
 	const handleSignIn = async () => {
 		try {
@@ -39,15 +44,17 @@ export default function WelcomeScreen() {
 		<SafeAreaView style={styles.container}>
 			<View style={styles.content}>
 				<Text style={styles.title}>Chorus</Text>
-				<View style={styles.buttonContainer}>
-					<AppleAuthenticationButton
-						buttonType={AppleAuthenticationButtonType.SIGN_IN}
-						buttonStyle={AppleAuthenticationButtonStyle.BLACK}
-						cornerRadius={8}
-						style={styles.button}
-						onPress={handleSignIn}
-					/>
-				</View>
+				{isAppleAuthAvailable && (
+					<View style={styles.buttonContainer}>
+						<AppleAuthenticationButton
+							buttonType={AppleAuthenticationButtonType.SIGN_IN}
+							buttonStyle={AppleAuthenticationButtonStyle.BLACK}
+							cornerRadius={8}
+							style={styles.button}
+							onPress={handleSignIn}
+						/>
+					</View>
+				)}
 			</View>
 		</SafeAreaView>
 	);
