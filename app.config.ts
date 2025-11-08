@@ -34,6 +34,10 @@ export default ({ config }: { config: ExpoConfig }) => ({
 	},
 	extra: {
 		API_URL: process.env.API_URL ?? 'https://example.com',
+		APPLE_MUSIC_TEAM_ID: process.env.APPLE_MUSIC_TEAM_ID,
+		APPLE_MUSIC_KEY_ID: process.env.APPLE_MUSIC_KEY_ID,
+		APPLE_MUSIC_PRIVATE_KEY: process.env.APPLE_MUSIC_PRIVATE_KEY,
+		APPLE_MUSIC_USER_TOKEN: process.env.APPLE_MUSIC_USER_TOKEN,
 	},
 });
 
