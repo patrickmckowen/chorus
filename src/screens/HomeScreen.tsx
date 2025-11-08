@@ -1,8 +1,18 @@
 import React, { useEffect } from 'react';
 import { SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
+type RootStackParamList = {
+	Home: undefined;
+	Profile: undefined;
+};
+
+type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
+
 export default function HomeScreen() {
+	const navigation = useNavigation<HomeScreenNavigationProp>();
 	const opacity = useSharedValue(0);
 	const cardScale = useSharedValue(0.95);
 	const cardOpacity = useSharedValue(0);
@@ -27,8 +37,17 @@ export default function HomeScreen() {
 	return (
 		<SafeAreaView style={{ flex: 1 }}>
 			<Animated.View style={[{ flex: 1, paddingHorizontal: 24 }, animatedStyle]}>
-				<View style={{ paddingTop: 24, paddingBottom: 16 }}>
+				<View style={{ paddingTop: 24, paddingBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
 					<Text style={{ fontSize: 34, fontWeight: '800' }}>Chorus</Text>
+					<TouchableOpacity
+						onPress={() => navigation.navigate('Profile')}
+						style={{
+							paddingHorizontal: 12,
+							paddingVertical: 8,
+						}}
+					>
+						<Text style={{ fontSize: 16, fontWeight: '600', color: '#007AFF' }}>Profile</Text>
+					</TouchableOpacity>
 				</View>
 
 				<View style={{ flexDirection: 'row', gap: 12 }}>
@@ -44,7 +63,7 @@ export default function HomeScreen() {
 						<Text style={{ color: 'white', fontWeight: '700' }}>Connect Spotify</Text>
 					</TouchableOpacity>
 					<TouchableOpacity
-						onPress={() => {}}
+						onPress={() => navigation.navigate('Profile')}
 						style={{
 							backgroundColor: '#000000',
 							paddingHorizontal: 16,

@@ -9,7 +9,8 @@
     "web": "expo start --web",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "test": "jest",
-    "validate-apple-music": "ts-node scripts/validate-apple-music.ts"
+    "validate-apple-music": "ts-node scripts/validate-apple-music.ts",
+    "test-token": "ts-node scripts/test-token-generation.ts"
   },
   "dependencies": {
     "@react-navigation/native": "^7.1.19",

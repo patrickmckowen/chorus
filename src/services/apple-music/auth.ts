@@ -2,30 +2,40 @@
  * Apple Music authentication flow
  */
 
+import { Platform } from 'react-native';
 import { AppleMusicConfig } from './types';
-import { generateDeveloperToken } from './token';
+import { TokenService } from './token-service';
 
 /**
  * Apple Music authentication manager
  */
 export class AppleMusicAuth {
 	private config: AppleMusicConfig;
+	private tokenService: TokenService;
 	private developerToken: string | null = null;
 
 	constructor(config: AppleMusicConfig) {
 		this.config = config;
+		this.tokenService = new TokenService();
 	}
 
 	/**
-	 * Generate and store developer token
+	 * Initialize auth - load tokens from secure storage and get developer token
 	 */
 	async initialize(): Promise<string> {
 		try {
-			this.developerToken = generateDeveloperToken(this.config);
+			// Load user token from secure storage if available
+			const storedUserToken = await this.tokenService.getUserToken();
+			if (storedUserToken) {
+				this.config.userToken = storedUserToken;
+			}
+
+			// Get developer token (from cache or generate new)
+			this.developerToken = await this.tokenService.getDeveloperToken(this.config);
 			return this.developerToken;
 		} catch (error) {
 			throw new Error(
-				`Failed to generate developer token: ${error instanceof Error ? error.message : String(error)}`
+				`Failed to initialize Apple Music auth: ${error instanceof Error ? error.message : String(error)}`
 			);
 		}
 	}
@@ -41,10 +51,11 @@ export class AppleMusicAuth {
 	}
 
 	/**
-	 * Set user token (obtained from user authorization)
+	 * Set user token (obtained from user authorization) and store securely
 	 */
-	setUserToken(userToken: string): void {
+	async setUserToken(userToken: string): Promise<void> {
 		this.config.userToken = userToken;
+		await this.tokenService.storeUserToken(userToken);
 	}
 
 	/**
@@ -62,22 +73,53 @@ export class AppleMusicAuth {
 	}
 
 	/**
-	 * For web/browser environments, this would trigger MusicKit JS authorization
-	 * For React Native, this would need platform-specific implementation
-	 * This is a placeholder that should be implemented based on the target platform
+	 * Authorize user - platform-specific implementation
+	 * For iOS: Uses SKCloudServiceController (requires native module)
+	 * For POC: Can use environment variable or manual token entry
 	 */
 	async authorizeUser(): Promise<string> {
-		// In a real implementation, this would:
-		// - For web: Use MusicKit JS to request user authorization
-		// - For iOS: Use SKCloudServiceController
-		// - For Android: Use appropriate Android API
-		
-		// For now, this is a placeholder
+		if (Platform.OS === 'ios') {
+			return this.authorizeUserIOS();
+		} else if (Platform.OS === 'android') {
+			throw new Error('Apple Music authorization is not supported on Android');
+		} else {
+			throw new Error(
+				'Apple Music authorization is only supported on iOS. ' +
+					'For web, use MusicKit JS.'
+			);
+		}
+	}
+
+	/**
+	 * iOS-specific authorization using SKCloudServiceController
+	 * This requires a native module wrapper or library
+	 * For POC, we'll provide a basic implementation that can be enhanced
+	 */
+	private async authorizeUserIOS(): Promise<string> {
+		// For POC, we'll check if there's a user token in environment
+		// In production, this should use a native module to call SKCloudServiceController
+		if (this.config.userToken) {
+			await this.setUserToken(this.config.userToken);
+			return this.config.userToken;
+		}
+
+		// TODO: Implement native module integration
+		// For now, throw an error with instructions
 		throw new Error(
-			'User authorization must be implemented for the target platform. ' +
-			'For web, use MusicKit JS. For iOS, use SKCloudServiceController. ' +
-			'For validation script, user token should be provided via environment variable.'
+			'iOS authorization requires a native module implementation. ' +
+				'For POC testing, you can set APPLE_MUSIC_USER_TOKEN in your environment variables. ' +
+				'To implement native authorization, create an Expo module that wraps SKCloudServiceController.'
 		);
+	}
+
+	/**
+	 * Clear all stored tokens
+	 */
+	async clearTokens(): Promise<void> {
+		await this.tokenService.clearUserToken();
+		await this.tokenService.clearDeveloperToken();
+		this.config.userToken = undefined;
+		this.developerToken = null;
 	}
 }
 

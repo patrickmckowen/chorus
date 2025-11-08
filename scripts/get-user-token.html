@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Apple Music User Token</title>
+    <script src="https://js-cdn.music.apple.com/musickit/v1/musickit.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0051D5;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #token {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            word-break: break-all;
+            margin-top: 20px;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎵 Get Apple Music User Token</h1>
+    <p>Enter your developer token to get a user token for testing.</p>
+    
+    <input 
+        type="text" 
+        id="devToken" 
+        placeholder="Paste your developer token here"
+        style="font-size: 12px;"
+    />
+    
+    <button id="authorizeBtn" onclick="authorize()">Authorize & Get User Token</button>
+    
+    <div id="status"></div>
+    <div id="token"></div>
+
+    <script>
+        let music;
+
+        async function authorize() {
+            const devToken = document.getElementById('devToken').value;
+            const statusDiv = document.getElementById('status');
+            const tokenDiv = document.getElementById('token');
+            const btn = document.getElementById('authorizeBtn');
+
+            if (!devToken) {
+                statusDiv.innerHTML = '<p class="error">Please enter a developer token</p>';
+                return;
+            }
+
+            btn.disabled = true;
+            statusDiv.innerHTML = '<p>Initializing MusicKit...</p>';
+
+            try {
+                // Initialize MusicKit
+                music = await MusicKit.configure({
+                    developerToken: devToken,
+                    app: {
+                        name: 'Chorus',
+                        build: '1.0.0'
+                    }
+                });
+
+                statusDiv.innerHTML = '<p>Requesting authorization...</p>';
+
+                // Request user authorization
+                const userToken = await music.authorize();
+
+                statusDiv.innerHTML = '<p style="color: green;">✅ Authorization successful!</p>';
+                tokenDiv.innerHTML = `
+                    <h3>Your User Token:</h3>
+                    <textarea readonly style="width: 100%; height: 100px; font-family: monospace; font-size: 12px;">${userToken}</textarea>
+                    <p><strong>Add this to your .env file:</strong></p>
+                    <code style="background: #e8e8e8; padding: 5px; display: block;">APPLE_MUSIC_USER_TOKEN=${userToken}</code>
+                `;
+            } catch (error) {
+                statusDiv.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
+
