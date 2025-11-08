@@ -1,8 +1,45 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, View, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { AppleAuthenticationButton, AppleAuthenticationButtonStyle, AppleAuthenticationButtonType } from 'expo-apple-authentication';
 
+type RootStackParamList = {
+	Welcome: undefined;
+	Profile: { userName: string };
+	Home: undefined;
+};
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Welcome'>;
+
 export default function WelcomeScreen() {
+	const navigation = useNavigation<NavigationProp>();
+
+	const handleSignIn = async () => {
+		try {
+			const credential = await AppleAuthentication.signInAsync({
+				requestedScopes: [
+					AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+					AppleAuthentication.AppleAuthenticationScope.EMAIL,
+				],
+			});
+
+			const fullName = credential.fullName;
+			const userName = fullName
+				? `${fullName.givenName || ''} ${fullName.familyName || ''}`.trim() || 'User'
+				: 'User';
+
+			navigation.navigate('Profile', { userName });
+		} catch (e: any) {
+			if (e.code === 'ERR_CANCELED') {
+				// User canceled, do nothing
+				return;
+			}
+			Alert.alert('Error', 'Failed to sign in with Apple. Please try again.');
+		}
+	};
+
 	return (
 		<SafeAreaView style={styles.container}>
 			<View style={styles.content}>
@@ -13,7 +50,7 @@ export default function WelcomeScreen() {
 						buttonStyle={AppleAuthenticationButtonStyle.BLACK}
 						cornerRadius={8}
 						style={styles.button}
-						onPress={() => {}}
+						onPress={handleSignIn}
 					/>
 				</View>
 			</View>
