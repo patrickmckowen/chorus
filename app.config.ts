@@ -19,6 +19,7 @@ export default ({ config }: { config: ExpoConfig }) => ({
 	ios: {
 		supportsTablet: true,
 		bundleIdentifier: 'com.patrickmckowen.chorus',
+		usesAppleSignIn: true,
 	},
 	android: {
 		adaptiveIcon: {
