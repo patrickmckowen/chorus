@@ -1,12 +1,7 @@
 import React from 'react';
 import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-
-type RootStackParamList = {
-	Welcome: undefined;
-	Profile: { userName: string };
-	Home: undefined;
-};
+import { RootStackParamList } from 'navigation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 

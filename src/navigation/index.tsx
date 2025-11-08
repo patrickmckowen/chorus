@@ -5,7 +5,13 @@ import WelcomeScreen from 'screens/WelcomeScreen';
 import ProfileScreen from 'screens/ProfileScreen';
 import HomeScreen from 'screens/HomeScreen';
 
-const Stack = createNativeStackNavigator();
+export type RootStackParamList = {
+	Welcome: undefined;
+	Profile: { userName: string };
+	Home: undefined;
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
 	return (
