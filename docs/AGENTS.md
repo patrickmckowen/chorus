@@ -25,11 +25,11 @@ Agents should assume the following:
    - All agents must assume new providers (e.g., YouTube Music) could be added later.
 
 3. **Real-Time Synchronization:**
-   - Use **Firebase Realtime Database** or **Firestore** for presence and updates.
-   - Prefer **WebSocket or Firebase onSnapshot** for live activity feed sync.
+   - Use **Supabase Realtime** for presence and updates.
+   - Prefer **WebSocket or Supabase Realtime subscriptions** for live activity feed sync.
 
 4. **Serverless/Edge-Ready Backend:**
-   - The backend should be modular — deployable on Firebase Functions or Node-based microservices.
+   - The backend should be modular — deployable on Supabase Edge Functions or Node-based microservices.
    - Avoid heavy persistent servers.
    - Shared utils (e.g., data normalization, track metadata mapping) should be portable between client and backend.
 
@@ -57,7 +57,7 @@ Agents should assume the following:
 **Planned Structure (to be implemented):**
 - **/src/services/** → Integrations (Spotify, Apple Music, backend API clients).
 - **/src/features/** → Independent app modules (Feed, Groups, Profile, Auth).
-- **/functions/** → Firebase or serverless backend functions.
+- **/functions/** → Supabase Edge Functions or serverless backend functions.
 
 ---
 
@@ -113,7 +113,7 @@ Group {
 - **ESLint + Prettier** for code quality.
 
 **Planned (to be added):**
-- **Firebase** for backend integration (Realtime Database or Firestore).
+- **Supabase** for backend integration (Realtime, Database, Auth).
 - **Zustand** or **React Context** for state management.
 - **Apple MusicKit JS** + **Spotify Web API** clients.
 - **Node.js 20+** for serverless functions.
@@ -140,7 +140,7 @@ npm run lint
 # Run tests
 npm run test
 
-# Deploy Firebase functions (to be added when functions are set up)
+# Deploy Supabase Edge Functions (to be added when functions are set up)
 # npm run deploy:functions
 ```
 
@@ -165,7 +165,7 @@ When creating or modifying a module:
 
 ## Next Steps for Agents
 1. ✅ Initialize the React Native app with Expo and new architecture (completed).
-2. Set up Firebase project and connection.
+2. Set up Supabase project and connection.
 3. Create service wrappers for Spotify and Apple Music in `/src/services/`.
 4. Create feature modules (Feed, Groups, Profile, Auth) in `/src/features/`.
 5. Set up state management (Zustand or React Context).
