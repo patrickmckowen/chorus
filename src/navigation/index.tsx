@@ -24,18 +24,34 @@ export default function RootNavigator() {
 		let unsub: (() => void) | undefined;
 		(async () => {
 			const { data } = await supabase.auth.getSession();
-			setIsAuthenticated(!!data.session);
+			const authed = !!data.session;
+			setIsAuthenticated(authed);
 			setIsReady(true);
+			
 			unsub = subscribeToAuthChanges(async () => {
 				const { data: s } = await supabase.auth.getSession();
 				const authed = !!s.session;
 				setIsAuthenticated(authed);
+				
 				if (navigationRef.isReady()) {
 					if (authed) {
 						// After login, go to Profile
+						// Fetch user name from profile
+						const { data: { user } } = await supabase.auth.getUser();
+						let userName = 'User';
+						if (user) {
+							const { data: profile } = await supabase
+								.from('profiles')
+								.select('full_name')
+								.eq('id', user.id)
+								.single();
+							if (profile?.full_name) {
+								userName = profile.full_name;
+							}
+						}
 						navigationRef.reset({
 							index: 0,
-							routes: [{ name: 'Profile', params: { userName: 'User' } }],
+							routes: [{ name: 'Profile', params: { userName } }],
 						});
 					} else {
 						// After logout, go to Welcome

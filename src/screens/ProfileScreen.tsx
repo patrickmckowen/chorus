@@ -1,6 +1,5 @@
-import React from 'react';
-import { SafeAreaView, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useEffect } from 'react';
+import { SafeAreaView, StyleSheet, Text, View, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from 'navigation';
 import { supabase } from 'lib/supabase';
@@ -9,22 +8,62 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 
 export default function ProfileScreen({ route }: Props) {
 	const { userName } = route.params;
-	const navigation = useNavigation();
+	const [isLoggingOut, setIsLoggingOut] = useState(false);
+	const [currentUserName, setCurrentUserName] = useState(userName);
+
+	// Fetch current user profile from Supabase
+	useEffect(() => {
+		const fetchUserProfile = async () => {
+			const { data: { user } } = await supabase.auth.getUser();
+			if (user) {
+				const { data: profile } = await supabase
+					.from('profiles')
+					.select('full_name')
+					.eq('id', user.id)
+					.single();
+				
+				if (profile?.full_name) {
+					setCurrentUserName(profile.full_name);
+				}
+			}
+		};
+		fetchUserProfile();
+	}, []);
+
+	const handleLogout = async () => {
+		try {
+			setIsLoggingOut(true);
+			const { error } = await supabase.auth.signOut();
+			if (error) {
+				console.error('Logout error:', error);
+				Alert.alert('Error', 'Failed to log out. Please try again.');
+				setIsLoggingOut(false);
+				return;
+			}
+			// Navigation reset is handled by auth subscription in RootNavigator
+			// No need to manually navigate - the subscription will detect the signOut
+		} catch (error) {
+			console.error('Logout exception:', error);
+			Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+			setIsLoggingOut(false);
+		}
+	};
 
 	return (
 		<SafeAreaView style={styles.container}>
 			<View style={styles.content}>
-				<Text style={styles.title}>{userName}</Text>
+				<Text style={styles.title}>{currentUserName}</Text>
 				<View style={styles.spacer} />
 				<TouchableOpacity
-					onPress={async () => {
-						await supabase.auth.signOut();
-						// Navigation reset is handled by auth subscription in RootNavigator
-						navigation.navigate('Welcome' as never);
-					}}
-					style={styles.logoutButton}
+					onPress={handleLogout}
+					style={[styles.logoutButton, isLoggingOut && styles.logoutButtonDisabled]}
+					disabled={isLoggingOut}
 				>
-					<Text style={styles.logoutText}>Log out</Text>
+					{isLoggingOut ? (
+						<ActivityIndicator color="#000" />
+					) : (
+						<Text style={styles.logoutText}>Log out</Text>
+					)}
 				</TouchableOpacity>
 			</View>
 		</SafeAreaView>
@@ -54,6 +93,9 @@ const styles = StyleSheet.create({
 		borderRadius: 12,
 		alignItems: 'center',
 		marginBottom: 16,
+	},
+	logoutButtonDisabled: {
+		opacity: 0.6,
 	},
 	logoutText: {
 		fontWeight: '700',
