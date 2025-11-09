@@ -19,6 +19,7 @@ export default ({ config }: { config: ExpoConfig }) => ({
 	ios: {
 		supportsTablet: true,
 		bundleIdentifier: 'com.patrickmckowen.chorus',
+		usesAppleSignIn: true,
 	},
 	android: {
 		adaptiveIcon: {
@@ -32,6 +33,7 @@ export default ({ config }: { config: ExpoConfig }) => ({
 	web: {
 		favicon: './assets/favicon.png',
 	},
+	plugins: ['expo-apple-authentication'],
 	extra: {
 		API_URL: process.env.API_URL ?? 'https://example.com',
 	},
