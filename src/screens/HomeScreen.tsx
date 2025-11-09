@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { SafeAreaView, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 export default function HomeScreen() {
@@ -11,7 +11,8 @@ export default function HomeScreen() {
 		opacity.value = withTiming(1, { duration: 600 });
 		cardScale.value = withTiming(1, { duration: 500 });
 		cardOpacity.value = withTiming(1, { duration: 500 });
-	}, [opacity]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	const animatedStyle = useAnimatedStyle(() => {
 		return { opacity: opacity.value };
@@ -25,50 +26,24 @@ export default function HomeScreen() {
 	}, []);
 
 	return (
-		<SafeAreaView style={{ flex: 1 }}>
-			<Animated.View style={[{ flex: 1, paddingHorizontal: 24 }, animatedStyle]}>
-				<View style={{ paddingTop: 24, paddingBottom: 16 }}>
-					<Text style={{ fontSize: 34, fontWeight: '800' }}>Chorus</Text>
+		<SafeAreaView style={styles.container}>
+			<Animated.View style={[styles.content, animatedStyle]}>
+				<View style={styles.header}>
+					<Text style={styles.title}>Chorus</Text>
 				</View>
 
-				<View style={{ flexDirection: 'row', gap: 12 }}>
-					<TouchableOpacity
-						onPress={() => {}}
-						style={{
-							backgroundColor: '#1DB954',
-							paddingHorizontal: 16,
-							paddingVertical: 12,
-							borderRadius: 12,
-						}}
-					>
-						<Text style={{ color: 'white', fontWeight: '700' }}>Connect Spotify</Text>
+				<View style={styles.buttonRow}>
+					<TouchableOpacity onPress={() => {}} style={styles.spotifyButton}>
+						<Text style={styles.buttonText}>Connect Spotify</Text>
 					</TouchableOpacity>
-					<TouchableOpacity
-						onPress={() => {}}
-						style={{
-							backgroundColor: '#000000',
-							paddingHorizontal: 16,
-							paddingVertical: 12,
-							borderRadius: 12,
-						}}
-					>
-						<Text style={{ color: 'white', fontWeight: '700' }}>Connect Apple Music</Text>
+					<TouchableOpacity onPress={() => {}} style={styles.appleButton}>
+						<Text style={styles.buttonText}>Connect Apple Music</Text>
 					</TouchableOpacity>
 				</View>
 
-				<Animated.View
-					style={[
-						{
-							marginTop: 24,
-							borderRadius: 16,
-							backgroundColor: '#f2f2f7',
-							padding: 20,
-						},
-						cardAnimatedStyle,
-					]}
-				>
-					<Text style={{ fontSize: 16, fontWeight: '600', marginBottom: 8 }}>Welcome</Text>
-					<Text style={{ color: '#555' }}>
+				<Animated.View style={[styles.card, cardAnimatedStyle]}>
+					<Text style={styles.cardTitle}>Welcome</Text>
+					<Text style={styles.cardText}>
 						This is a sample animated card powered by Fabric + Reanimated 4.
 					</Text>
 				</Animated.View>
@@ -76,5 +51,57 @@ export default function HomeScreen() {
 		</SafeAreaView>
 	);
 }
+
+const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+	},
+	content: {
+		flex: 1,
+		paddingHorizontal: 24,
+	},
+	header: {
+		paddingTop: 24,
+		paddingBottom: 16,
+	},
+	title: {
+		fontSize: 34,
+		fontWeight: '800',
+	},
+	buttonRow: {
+		flexDirection: 'row',
+		gap: 12,
+	},
+	spotifyButton: {
+		backgroundColor: '#1DB954',
+		paddingHorizontal: 16,
+		paddingVertical: 12,
+		borderRadius: 12,
+	},
+	appleButton: {
+		backgroundColor: '#000000',
+		paddingHorizontal: 16,
+		paddingVertical: 12,
+		borderRadius: 12,
+	},
+	buttonText: {
+		color: 'white',
+		fontWeight: '700',
+	},
+	card: {
+		marginTop: 24,
+		borderRadius: 16,
+		backgroundColor: '#f2f2f7',
+		padding: 20,
+	},
+	cardTitle: {
+		fontSize: 16,
+		fontWeight: '600',
+		marginBottom: 8,
+	},
+	cardText: {
+		color: '#555',
+	},
+});
 
 

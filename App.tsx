@@ -1,11 +1,17 @@
 import React from 'react';
-import { SafeAreaView } from 'react-native';
+import { SafeAreaView, StyleSheet } from 'react-native';
 import RootNavigator from 'navigation';
 
 export default function App() {
-  return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <RootNavigator />
-    </SafeAreaView>
-  );
+	return (
+		<SafeAreaView style={styles.container}>
+			<RootNavigator />
+		</SafeAreaView>
+	);
 }
+
+const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+	},
+});

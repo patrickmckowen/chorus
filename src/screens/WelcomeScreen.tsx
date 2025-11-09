@@ -31,8 +31,8 @@ export default function WelcomeScreen() {
 				: 'User';
 
 			navigation.navigate('Profile', { userName });
-		} catch (e: any) {
-			if (e.code === 'ERR_CANCELED') {
+		} catch (e) {
+			if (e && typeof e === 'object' && 'code' in e && e.code === 'ERR_CANCELED') {
 				// User canceled, do nothing
 				return;
 			}
