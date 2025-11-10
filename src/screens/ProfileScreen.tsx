@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView, StyleSheet, Text, View, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from 'navigation';
 import { supabase } from 'lib/supabase';
@@ -44,10 +44,12 @@ export default function ProfileScreen({ route }: Props) {
 			}
 			// Navigate immediately after successful signOut
 			// Subscription in RootNavigator will also handle this as backup
-			navigation.reset({
-				index: 0,
-				routes: [{ name: 'Welcome' as never }],
-			});
+			navigation.dispatch(
+				CommonActions.reset({
+					index: 0,
+					routes: [{ name: 'Welcome' }],
+				})
+			);
 			setIsLoggingOut(false);
 		} catch (error) {
 			console.error('Logout exception:', error);
