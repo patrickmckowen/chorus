@@ -18,6 +18,7 @@ Agents should assume the following:
 1. **Cross-Platform First:**
    - Use **React Native (Expo)** on the new architecture for unified development.
    - Keep native-specific logic minimal and well-isolated (e.g., platform conditionals only in service wrappers).
+   - Use **Expo Router** for file-based routing — simpler, more maintainable than imperative navigation.
 
 2. **Decoupled Data Layer:**
    - Each music service (Spotify, Apple Music) should have its own data provider with a common interface.
@@ -47,17 +48,25 @@ Agents should assume the following:
 
 ## Code Organization
 **Current Structure:**
-- **/src/navigation/** → Navigation setup and routing configuration.
-- **/src/screens/** → Screen components (e.g., HomeScreen).
-- **/src/components/** → Shared UI primitives (cards, list items, avatars, buttons).
-- **/src/lib/** → Utilities and configuration helpers.
-- **/src/hooks/** → Custom React hooks.
-- **/src/theme/** → Theming configuration and styles.
+- **/src/app/** → Expo Router file-based routes
+  - **_layout.tsx** → Root layout with auth protection
+  - **index.tsx** → Entry point with redirect logic
+  - **(auth)/** → Unauthenticated route group (welcome, sign-in)
+  - **(tabs)/** → Protected tab route group (home, profile)
+- **/src/features/** → Independent app modules (Auth implemented, Groups/Feed planned)
+  - **/auth/** → Authentication helpers and session management
+- **/src/lib/** → Utilities and configuration (Supabase client, config)
+- **/src/components/** → Shared UI primitives (cards, list items, avatars, buttons)
+- **/src/hooks/** → Custom React hooks
+- **/src/theme/** → Theming configuration and styles
 
-**Planned Structure (to be implemented):**
-- **/src/services/** → Integrations (Spotify, Apple Music, backend API clients).
-- **/src/features/** → Independent app modules (Feed, Groups, Profile, Auth).
-- **/functions/** → Supabase Edge Functions or serverless backend functions.
+**Legacy (to be removed):**
+- **/src/navigation/** → Old React Navigation setup (deprecated)
+- **/src/screens/** → Old screen components (being migrated to /app routes)
+
+**Planned Structure:**
+- **/src/services/** → Integrations (Spotify, Apple Music API clients)
+- **/functions/** → Supabase Edge Functions or serverless backend functions
 
 ---
 
@@ -105,18 +114,20 @@ Group {
 
 ## Environment & Dependencies
 **Currently Installed:**
-- **Expo SDK ~54.0** with new architecture enabled (`newArchEnabled: true`).
-- **React 19.1.0** and **React Native 0.81.5**.
-- **React Navigation v7** for screen management.
-- **React Native Reanimated v4** for animations.
-- **TypeScript 5.9** with strict mode.
-- **ESLint + Prettier** for code quality.
+- **Expo SDK ~54.0** with new architecture enabled (`newArchEnabled: true`)
+- **React 19.1.0** and **React Native 0.81.5**
+- **Expo Router ~6.0** for file-based routing and navigation
+- **React Native Reanimated v4** for animations
+- **TypeScript 5.9** with strict mode
+- **ESLint + Prettier** for code quality
+- **Supabase v2.80.0** for backend (Auth, Database, Realtime)
+- **expo-apple-authentication v8.0.7** for Apple Sign-In
+- **@react-native-async-storage/async-storage v2.2.0** for session persistence
 
 **Planned (to be added):**
-- **Supabase** for backend integration (Realtime, Database, Auth).
-- **Zustand** or **React Context** for state management.
-- **Apple MusicKit JS** + **Spotify Web API** clients.
-- **Node.js 20+** for serverless functions.
+- **Zustand** or **React Context** for global app state management
+- **Apple MusicKit JS** + **Spotify Web API** clients
+- **Node.js 20+** for Supabase Edge Functions
 
 ---
 
@@ -164,14 +175,19 @@ When creating or modifying a module:
 ---
 
 ## Next Steps for Agents
-1. ✅ Initialize the React Native app with Expo and new architecture (completed).
-2. Set up Supabase project and connection.
-3. Create service wrappers for Spotify and Apple Music in `/src/services/`.
-4. Create feature modules (Feed, Groups, Profile, Auth) in `/src/features/`.
-5. Set up state management (Zustand or React Context).
-6. Prototype real-time feed with mock data.
-7. Add auth flows and group invite mechanism.
-8. Implement persistence and caching strategies.
+1. ✅ Initialize the React Native app with Expo and new architecture
+2. ✅ Migrate to Expo Router with file-based routing
+3. ✅ Set up Supabase project and connection
+4. ✅ Implement Apple Sign-In with Supabase Auth
+5. ✅ Add session-based route protection
+6. ✅ Create Auth feature module in `/src/features/`
+7. Create service wrappers for Spotify and Apple Music in `/src/services/`
+8. Create Feed and Groups feature modules in `/src/features/`
+9. Set up global state management (Zustand or React Context)
+10. Prototype real-time activity feed with mock data
+11. Add group creation and invite mechanism
+12. Implement music service integrations (Spotify OAuth, Apple MusicKit)
+13. Add real-time playback tracking and feed updates
 
 ---
 
