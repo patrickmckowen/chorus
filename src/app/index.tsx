@@ -4,23 +4,22 @@ import { supabase } from 'lib/supabase';
 import { useState } from 'react';
 
 export default function Index() {
-	const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
-	useEffect(() => {
-		(async () => {
-			const { data } = await supabase.auth.getSession();
-			setIsAuthenticated(!!data.session);
-		})();
-	}, []);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(!!data.session);
+    })();
+  }, []);
 
-	if (isAuthenticated === null) {
-		return null;
-	}
+  if (isAuthenticated === null) {
+    return null;
+  }
 
-	if (isAuthenticated) {
-		return <Redirect href="/(tabs)/profile" />;
-	}
+  if (isAuthenticated) {
+    return <Redirect href="/(tabs)/profile" />;
+  }
 
-	return <Redirect href="/(auth)/welcome" />;
+  return <Redirect href="/(auth)/welcome" />;
 }
-

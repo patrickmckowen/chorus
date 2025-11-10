@@ -3,9 +3,8 @@ import { render, screen } from '@testing-library/react-native';
 import HomeScreen from '../../app/(tabs)/home';
 
 describe('HomeScreen', () => {
-	it('renders title', () => {
-		render(<HomeScreen />);
-		expect(screen.getByText('Chorus')).toBeTruthy();
-	});
+  it('renders title', () => {
+    render(<HomeScreen />);
+    expect(screen.getByText('Chorus')).toBeTruthy();
+  });
 });
-
