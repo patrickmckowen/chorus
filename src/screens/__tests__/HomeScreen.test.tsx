@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react-native';
-import HomeScreen from '../HomeScreen';
+import HomeScreen from '../../app/(tabs)/home';
 
 describe('HomeScreen', () => {
 	it('renders title', () => {

@@ -42,10 +42,10 @@ export default function RootLayout() {
 		} else if (!isAuthenticated && inTabsGroup) {
 			// Redirect unauthenticated users away from protected screens
 			router.replace('/(auth)/welcome');
-		} else if (!isAuthenticated && segments.length === 0) {
+		} else if (!isAuthenticated && !inAuthGroup && !inTabsGroup) {
 			// Initial load for unauthenticated users
 			router.replace('/(auth)/welcome');
-		} else if (isAuthenticated && segments.length === 0) {
+		} else if (isAuthenticated && !inAuthGroup && !inTabsGroup) {
 			// Initial load for authenticated users
 			router.replace('/(tabs)/profile');
 		}
