@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView, StyleSheet, Text, View, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from 'navigation';
 import { supabase } from 'lib/supabase';
@@ -8,6 +9,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 
 export default function ProfileScreen({ route }: Props) {
 	const { userName } = route.params;
+	const navigation = useNavigation();
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
 	const [currentUserName, setCurrentUserName] = useState(userName);
 
@@ -40,8 +42,13 @@ export default function ProfileScreen({ route }: Props) {
 				setIsLoggingOut(false);
 				return;
 			}
-			// Navigation reset is handled by auth subscription in RootNavigator
-			// No need to manually navigate - the subscription will detect the signOut
+			// Navigate immediately after successful signOut
+			// Subscription in RootNavigator will also handle this as backup
+			navigation.reset({
+				index: 0,
+				routes: [{ name: 'Welcome' as never }],
+			});
+			setIsLoggingOut(false);
 		} catch (error) {
 			console.error('Logout exception:', error);
 			Alert.alert('Error', 'An unexpected error occurred. Please try again.');
