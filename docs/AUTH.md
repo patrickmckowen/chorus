@@ -20,7 +20,7 @@ Chorus currently implements **Apple Sign-In only** as the primary authentication
 3. `handleSignIn()` calls `AppleAuthentication.signInAsync()` with scopes:
    - `FULL_NAME`
    - `EMAIL`
-4. On success: Extract user name from credential and navigate to `Profile` screen
+4. On success: Identity token is exchanged with Supabase via `signInWithIdToken`, profile row is upserted, and app navigates to `Profile`
 5. On error: Handle `ERR_CANCELED` silently; show alert for other errors
 
 **Key Code:**
@@ -65,6 +65,28 @@ Chorus currently implements **Apple Sign-In only** as the primary authentication
    - Apple Sign-In capability must be enabled in Xcode project
 
 ---
+
+## Supabase Setup (Manual)
+
+1. In Supabase Dashboard → Authentication → Providers → Apple:
+   - Enable provider
+   - Client ID: `com.patrickmckowen.chorus`
+2. SQL (Profiles table + RLS):
+   ```sql
+   create table if not exists public.profiles (
+     id uuid primary key references auth.users(id) on delete cascade,
+     full_name text,
+     avatar_url text,
+     created_at timestamptz default now()
+   );
+   alter table public.profiles enable row level security;
+   create policy "Profiles are viewable by owner" on public.profiles
+   for select using ( auth.uid() = id );
+   create policy "Profiles are insertable by owner" on public.profiles
+   for insert with check ( auth.uid() = id );
+   create policy "Profiles are updatable by owner" on public.profiles
+   for update using ( auth.uid() = id );
+   ```
 
 ## Key Constraints & Limitations
 

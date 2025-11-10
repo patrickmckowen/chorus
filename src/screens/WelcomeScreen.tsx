@@ -5,6 +5,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { AppleAuthenticationButton, AppleAuthenticationButtonStyle, AppleAuthenticationButtonType } from 'expo-apple-authentication';
 import { RootStackParamList } from 'navigation';
+import { supabase } from 'lib/supabase';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Welcome'>;
 
@@ -25,10 +26,24 @@ export default function WelcomeScreen() {
 				],
 			});
 
-			const fullName = credential.fullName;
-			const userName = fullName
-				? `${fullName.givenName || ''} ${fullName.familyName || ''}`.trim() || 'User'
-				: 'User';
+			if (!credential.identityToken) {
+				throw new Error('No Apple identityToken');
+			}
+
+			const { data, error } = await supabase.auth.signInWithIdToken({
+				provider: 'apple',
+				token: credential.identityToken,
+			});
+			if (error) throw error;
+
+			const user = data.user;
+
+			const fullNameStr = `${credential.fullName?.givenName ?? ''} ${credential.fullName?.familyName ?? ''}`.trim();
+			if (fullNameStr) {
+				await supabase.from('profiles').upsert({ id: user.id, full_name: fullNameStr });
+			}
+
+			const userName = fullNameStr || 'User';
 
 			navigation.navigate('Profile', { userName });
 		} catch (e) {
