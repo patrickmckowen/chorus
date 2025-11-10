@@ -33,7 +33,8 @@ export default ({ config }: { config: ExpoConfig }) => ({
 	web: {
 		favicon: './assets/favicon.png',
 	},
-	plugins: ['expo-apple-authentication'],
+	scheme: 'chorus',
+	plugins: ['expo-apple-authentication', 'expo-router'],
 	extra: {
 		API_URL: process.env.API_URL ?? 'https://example.com',
 	},
