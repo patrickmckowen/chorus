@@ -35,13 +35,10 @@ export default function ProfileScreen({ route }: Props) {
 	const handleLogout = async () => {
 		try {
 			setIsLoggingOut(true);
-			const { error } = await supabase.auth.signOut();
-			if (error) {
+			// Fire-and-forget sign out to avoid UI blocking if network hangs
+			supabase.auth.signOut().catch((error) => {
 				console.error('Logout error:', error);
-				Alert.alert('Error', 'Failed to log out. Please try again.');
-				setIsLoggingOut(false);
-				return;
-			}
+			});
 			// Navigate immediately after successful signOut
 			// Subscription in RootNavigator will also handle this as backup
 			navigation.dispatch(
@@ -50,11 +47,9 @@ export default function ProfileScreen({ route }: Props) {
 					routes: [{ name: 'Welcome' }],
 				})
 			);
-			setIsLoggingOut(false);
 		} catch (error) {
 			console.error('Logout exception:', error);
 			Alert.alert('Error', 'An unexpected error occurred. Please try again.');
-			setIsLoggingOut(false);
 		}
 	};
 
