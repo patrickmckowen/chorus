@@ -2,17 +2,19 @@
 
 ## Overview
 
-Chorus currently implements **Apple Sign-In only** as the primary authentication method. The implementation is minimal and does not include token storage, session persistence, or backend integration. This document outlines the current state, constraints, and guidelines for safely extending authentication.
+Chorus currently implements **Apple Sign-In with Supabase** as the primary authentication method. The implementation includes full session persistence, Supabase backend integration, and file-based route protection using Expo Router. This document outlines the current state, constraints, and guidelines for safely extending authentication.
 
 ---
 
 ## Current Implementation
 
-### Apple Sign-In
+### Apple Sign-In with Supabase
 
-**Location:** `src/screens/WelcomeScreen.tsx`
+**Location:** `src/app/(auth)/welcome.tsx`
 
-**Package:** `expo-apple-authentication` v8.0.7
+**Packages:** 
+- `expo-apple-authentication` v8.0.7
+- `@supabase/supabase-js` v2.80.0
 
 **Flow:**
 1. Check availability via `AppleAuthentication.isAvailableAsync()` (iOS only)
@@ -20,11 +22,15 @@ Chorus currently implements **Apple Sign-In only** as the primary authentication
 3. `handleSignIn()` calls `AppleAuthentication.signInAsync()` with scopes:
    - `FULL_NAME`
    - `EMAIL`
-4. On success: Identity token is exchanged with Supabase via `signInWithIdToken`, profile row is upserted, and app navigates to `Profile`
-5. On error: Handle `ERR_CANCELED` silently; show alert for other errors
+4. Identity token is exchanged with Supabase via `signInWithIdToken`
+5. User profile is upserted in Supabase `profiles` table with full name
+6. Supabase session is created and persisted
+7. Root layout auth guard automatically redirects to protected routes
+8. On error: Handle `ERR_CANCELED` silently; show alert for other errors
 
 **Key Code:**
-```19:41:src/screens/WelcomeScreen.tsx
+
+```14:48:src/app/(auth)/welcome.tsx
 	const handleSignIn = async () => {
 		try {
 			const credential = await AppleAuthentication.signInAsync({
@@ -34,12 +40,24 @@ Chorus currently implements **Apple Sign-In only** as the primary authentication
 				],
 			});
 
-			const fullName = credential.fullName;
-			const userName = fullName
-				? `${fullName.givenName || ''} ${fullName.familyName || ''}`.trim() || 'User'
-				: 'User';
+			if (!credential.identityToken) {
+				throw new Error('No Apple identityToken');
+			}
 
-			navigation.navigate('Profile', { userName });
+			const { data, error } = await supabase.auth.signInWithIdToken({
+				provider: 'apple',
+				token: credential.identityToken,
+			});
+			if (error) throw error;
+
+			const user = data.user;
+
+			const fullNameStr = `${credential.fullName?.givenName ?? ''} ${credential.fullName?.familyName ?? ''}`.trim();
+			if (fullNameStr) {
+				await supabase.from('profiles').upsert({ id: user.id, full_name: fullNameStr });
+			}
+
+			// Navigation will be handled by the root layout's auth state change
 		} catch (e) {
 			if (e && typeof e === 'object' && 'code' in e && e.code === 'ERR_CANCELED') {
 				// User canceled, do nothing
@@ -49,6 +67,67 @@ Chorus currently implements **Apple Sign-In only** as the primary authentication
 		}
 	};
 ```
+
+### Route Protection with Expo Router
+
+**Location:** `src/app/_layout.tsx`
+
+**Implementation:**
+- Root layout monitors Supabase auth session state
+- Uses `useSegments()` to detect current route group
+- Implements auth guard logic:
+  - Authenticated users in `(auth)` group → redirect to `/(tabs)/profile`
+  - Unauthenticated users in `(tabs)` group → redirect to `/(auth)/welcome`
+- Subscribes to auth state changes for automatic navigation
+- Session checking happens on mount and whenever auth state changes
+
+**Route Groups:**
+- `(auth)/` — Unauthenticated routes (welcome, sign-in)
+- `(tabs)/` — Protected routes requiring authentication (home, profile)
+
+**Key Code:**
+
+```10:39:src/app/_layout.tsx
+	useEffect(() => {
+		// Function to check auth and redirect
+		const checkAuthAndRedirect = async () => {
+			const { data } = await supabase.auth.getSession();
+			const isAuthenticated = !!data.session;
+			
+			const inAuthGroup = segments[0] === '(auth)';
+			const inTabsGroup = segments[0] === '(tabs)';
+
+			if (isAuthenticated && inAuthGroup) {
+				// Redirect authenticated users away from auth screens
+				router.replace('/(tabs)/profile');
+			} else if (!isAuthenticated && inTabsGroup) {
+				// Redirect unauthenticated users away from protected screens
+				router.replace('/(auth)/welcome');
+			}
+		};
+
+		// Check initial auth state on mount
+		checkAuthAndRedirect();
+
+		// Subscribe to auth changes
+		const unsub = subscribeToAuthChanges(() => {
+			checkAuthAndRedirect();
+		});
+		
+		return () => {
+			if (unsub) unsub();
+		};
+	}, [router, segments]);
+```
+
+### Session Management
+
+**Location:** `src/features/auth/session.ts`
+
+**Implementation:**
+- Provides `subscribeToAuthChanges()` helper for auth state subscriptions
+- Uses Supabase `onAuthStateChange` listener
+- Callback fires on sign-in, sign-out, and session updates
 
 ---
 
@@ -92,13 +171,16 @@ Chorus currently implements **Apple Sign-In only** as the primary authentication
 
 **Current State:**
 - ✅ Apple Sign-In implemented (iOS only)
-- ❌ No token storage or session persistence
-- ❌ No backend integration (Supabase auth not connected)
-- ❌ No auth state management (Zustand/Context not set up)
-- ❌ No Spotify OAuth (placeholder button in `HomeScreen`)
-- ❌ No Apple MusicKit authentication (placeholder button in `HomeScreen`)
-- ❌ No user ID or credential storage
-- ❌ Navigation-based auth flow (no protected routes)
+- ✅ Supabase backend integration with auth
+- ✅ Session persistence via Supabase
+- ✅ User profile storage in Supabase database
+- ✅ File-based route protection with Expo Router
+- ✅ Real-time auth state monitoring
+- ✅ Automatic navigation on auth state changes
+- ❌ No Spotify OAuth (planned)
+- ❌ No Apple MusicKit authentication (planned)
+- ❌ No music service token storage (planned)
+- ❌ No global state management (Zustand/Context not set up)
 
 **Platform Limitations:**
 - Apple Sign-In only available on iOS devices
@@ -112,10 +194,8 @@ Per `AGENTS.md`, the following are planned:
 
 1. **Spotify OAuth** — OAuth 2.0 flow for Spotify account linking
 2. **Apple MusicKit Authentication** — MusicKit JS integration for Apple Music
-3. **Supabase Integration** — Backend auth and user management
-4. **State Management** — Zustand or React Context for auth state
-5. **Token Storage** — Secure storage of access/refresh tokens in User model
-6. **Protected Routes** — Navigation guards based on auth state
+3. **State Management** — Zustand or React Context for global auth state
+4. **Music Service Token Storage** — Secure storage of access/refresh tokens for music services
 
 ---
 
@@ -160,33 +240,39 @@ linkedServices: {
 
 ### State Management Integration
 
-**Current:** No global auth state.
+**Current:** Session-based auth state via Supabase
 
-**Integration Points:**
-- Add auth state to Zustand store or React Context
-- Track: `isAuthenticated`, `currentUser`, `linkedServices`
-- Persist auth state across app restarts
-- Update navigation to use auth state (protected routes)
+**Implemented:**
+- ✅ Supabase session automatically persisted across app restarts
+- ✅ Auth state changes trigger automatic navigation updates
+- ✅ Protected routes implemented via Expo Router layouts
+- ✅ Real-time auth state monitoring with subscriptions
 
-**Navigation Changes:**
-- Modify `src/navigation/index.tsx` to conditionally render `Welcome` vs `Home` based on auth state
-- Consider adding auth state check in `App.tsx` or navigation setup
+**Future Enhancement:**
+- Add Zustand store or React Context for global app state (user preferences, etc.)
+- Track additional state: `currentUser`, `linkedServices` (music services)
+- Cache user profile data to reduce Supabase queries
 
 ### Backend Integration (Supabase)
 
-**Current:** No backend connection.
+**Current:** Supabase fully integrated ✅
 
-**Integration Steps:**
-1. Set up Supabase project and client
-2. Configure Supabase Auth (may replace or complement Apple Sign-In)
-3. Store user data in Supabase database
-4. Sync `linkedServices` tokens to Supabase user record
-5. Use Supabase Realtime for auth state synchronization
+**Implemented:**
+1. ✅ Supabase client configured in `src/lib/supabase.ts`
+2. ✅ Supabase Auth integrated with Apple Sign-In
+3. ✅ User profiles stored in Supabase `profiles` table
+4. ✅ Session persistence via Supabase AsyncStorage adapter
+5. ✅ Real-time auth state synchronization
 
-**Important:**
-- Do not break existing Apple Sign-In flow during integration
-- Maintain backward compatibility if migrating to Supabase Auth
-- Consider hybrid approach: Apple Sign-In → Supabase user creation
+**Configuration:**
+- Supabase URL and anon key managed via `app.config.ts`
+- AsyncStorage used for session persistence
+- Row-level security (RLS) policies protect user data
+
+**Next Steps:**
+- Add `linkedServices` field to profiles table for music service tokens
+- Implement Supabase Edge Functions for music API integrations
+- Add real-time subscriptions for activity feed
 
 ---
 
@@ -196,16 +282,30 @@ linkedServices: {
 2. **Platform Checks:** Always check availability before showing auth buttons
 3. **Privacy:** Only request scopes that are necessary (see `AGENTS.md` line 38-39)
 4. **Token Security:** Never log or expose tokens in error messages or console
-5. **Navigation:** Current flow navigates directly to `Profile` — this will need to change when adding protected routes
+5. **Session Management:** Supabase automatically handles session refresh and persistence
+6. **Route Protection:** Auth guards in root layout prevent unauthorized access to protected routes
+7. **Navigation:** Auth state changes trigger automatic navigation — no manual navigation needed
 
 ---
 
 ## Key Files
 
-- `src/screens/WelcomeScreen.tsx` — Apple Sign-In implementation
-- `app.config.ts` — Apple Sign-In configuration
-- `src/navigation/index.tsx` — Navigation setup (initial route: `Welcome`)
-- `AGENTS.md` — Architecture and data model reference
+**Authentication:**
+- `src/app/(auth)/welcome.tsx` — Apple Sign-In implementation
+- `src/features/auth/session.ts` — Auth session helpers
+- `src/lib/supabase.ts` — Supabase client configuration
+
+**Route Protection:**
+- `src/app/_layout.tsx` — Root layout with auth guards
+- `src/app/index.tsx` — Entry point with redirect logic
+- `src/app/(tabs)/_layout.tsx` — Protected tab layout
+
+**Configuration:**
+- `app.config.ts` — Apple Sign-In and Expo configuration
+- `.env` — Supabase credentials (not committed)
+
+**Reference:**
+- `docs/AGENTS.md` — Architecture and data model reference
 
 ---
 
