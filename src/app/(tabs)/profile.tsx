@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView, StyleSheet, Text, View, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
 import { supabase } from 'lib/supabase';
 
 export default function ProfileScreen() {
-	const router = useRouter();
 	const [isLoggingOut, setIsLoggingOut] = useState(false);
 	const [currentUserName, setCurrentUserName] = useState('User');
 

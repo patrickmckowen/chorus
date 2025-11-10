@@ -49,7 +49,7 @@ export default function RootLayout() {
 			// Initial load for authenticated users
 			router.replace('/(tabs)/profile');
 		}
-	}, [isAuthenticated, segments]);
+	}, [isAuthenticated, segments, router]);
 
 	// Show nothing while checking auth state
 	if (isAuthenticated === null) {

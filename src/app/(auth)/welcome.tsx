@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView, StyleSheet, Text, View, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { AppleAuthenticationButton, AppleAuthenticationButtonStyle, AppleAuthenticationButtonType } from 'expo-apple-authentication';
 import { supabase } from 'lib/supabase';
 
 export default function WelcomeScreen() {
-	const router = useRouter();
 	const [isAppleAuthAvailable, setIsAppleAuthAvailable] = useState(false);
 
 	useEffect(() => {
