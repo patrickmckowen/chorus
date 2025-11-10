@@ -18,23 +18,21 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function RootNavigator() {
 	const navigationRef = useMemo(() => createNavigationContainerRef<RootStackParamList>(), []);
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
-	const [isReady, setIsReady] = useState(false);
 
 	useEffect(() => {
 		let unsub: (() => void) | undefined;
 		(async () => {
 			const { data } = await supabase.auth.getSession();
-			const authed = !!data.session;
-			setIsAuthenticated(authed);
-			setIsReady(true);
+			const initialAuthed = !!data.session;
+			setIsAuthenticated(initialAuthed);
 			
 			unsub = subscribeToAuthChanges(async () => {
 				const { data: s } = await supabase.auth.getSession();
-				const authed = !!s.session;
-				setIsAuthenticated(authed);
+				const isAuthed = !!s.session;
+				setIsAuthenticated(isAuthed);
 				
 				if (navigationRef.isReady()) {
-					if (authed) {
+					if (isAuthed) {
 						// After login, go to Profile
 						// Fetch user name from profile
 						const { data: { user } } = await supabase.auth.getUser();
