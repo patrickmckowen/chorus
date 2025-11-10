@@ -28,8 +28,12 @@ export default function ProfileScreen() {
 	const handleLogout = async () => {
 		try {
 			setIsLoggingOut(true);
-			await supabase.auth.signOut();
+			// Fire-and-forget sign out to avoid UI blocking if network hangs
 			// Navigation will be handled by the root layout's auth state change
+			supabase.auth.signOut().catch((error) => {
+				console.error('Logout error:', error?.message || 'Unknown error');
+				Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+			});
 		} catch (error) {
 			console.error('Logout exception:', error);
 			Alert.alert('Error', 'An unexpected error occurred. Please try again.');

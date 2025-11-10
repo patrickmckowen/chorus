@@ -8,7 +8,8 @@ export default function RootLayout() {
 	const router = useRouter();
 
 	useEffect(() => {
-		const unsub = subscribeToAuthChanges(async () => {
+		// Function to check auth and redirect
+		const checkAuthAndRedirect = async () => {
 			const { data } = await supabase.auth.getSession();
 			const isAuthenticated = !!data.session;
 			
@@ -22,12 +23,20 @@ export default function RootLayout() {
 				// Redirect unauthenticated users away from protected screens
 				router.replace('/(auth)/welcome');
 			}
+		};
+
+		// Check initial auth state on mount
+		checkAuthAndRedirect();
+
+		// Subscribe to auth changes
+		const unsub = subscribeToAuthChanges(() => {
+			checkAuthAndRedirect();
 		});
 		
 		return () => {
 			if (unsub) unsub();
 		};
-	}, [segments, router]);
+	}, [router, segments]);
 
 	return <Slot />;
 }
