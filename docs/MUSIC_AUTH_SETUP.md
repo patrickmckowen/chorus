@@ -33,17 +33,40 @@ EXPO_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN=your-apple-music-developer-token
 
 ### 3. Apple Music Developer Setup
 
+**Important:** The Media Services key must be linked to a **Media ID**, not your App ID. You'll need both an App ID (for your app) and a separate Media ID (for MusicKit services).
+
 1. Access [Apple Developer Portal](https://developer.apple.com)
-2. Navigate to **Certificates, Identifiers & Profiles** → **Keys**
-3. Create a **MusicKit Key**:
-   - Select **Media Services (MusicKit, ShazamKit)**
-   - Download the `.p8` private key file
-   - Note your **Key ID** and **Team ID**
-4. Generate a developer token:
+2. **Step 1: Create or verify your App ID** (for your app bundle):
+   - Navigate to **Certificates, Identifiers & Profiles** → **Identifiers**
+   - Create or find your App ID:
+     - Click the **+** button to create a new identifier, or find existing one
+     - **Bundle ID:** `com.patrickmckowen.chorus` (must match your app.config.ts)
+     - **Description:** Chorus App
+     - Under **Capabilities**, enable **MusicKit**
+     - Click **Continue** and **Register**
+3. **Step 2: Create a Media ID** (required for Media Services key):
+   - Still in **Identifiers**, click the **+** button
+   - Select **Media IDs** (not App IDs) and click **Continue**
+   - **Description:** Chorus Media ID (or any descriptive name)
+   - **Identifier:** Enter a reverse-domain style string (e.g., `media.com.patrickmckowen.chorus`)
+   - Under **Services**, enable **MusicKit** (and optionally ShazamKit, Apple Music Feed)
+   - Click **Continue** and **Register**
+4. **Step 3: Create a Media Services Key**:
+   - Navigate to **Keys** in the sidebar
+   - Click the **+** button to create a new key
+   - **Key Name:** Chorus MusicKit Key (or any descriptive name)
+   - Check **Media Services (MusicKit, ShazamKit, Apple Music Feed)**
+   - Click **Continue**
+   - **Important:** Select the **Media ID** you created in Step 2 (not your App ID) from the dropdown
+   - Click **Continue** and **Register**
+   - Download the `.p8` private key file (you can only download it once!)
+   - Note your **Key ID** and **Team ID** (shown on the key details page)
+5. **Step 4: Generate a developer token**:
    - Option A: Use a local Node.js script with JWT signing (`jose` package)
    - Option B: Use an existing token generation service
-5. Add the developer token to `.env` as `EXPO_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN`
-6. Ensure your iOS device/simulator is signed in to Apple Music
+   - The token must be signed with your `.p8` key using your Key ID and Team ID
+6. Add the developer token to `.env` as `EXPO_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN`
+7. Ensure your iOS device/simulator is signed in to Apple Music
 
 ## Running the Prototype
 
