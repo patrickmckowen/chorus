@@ -159,7 +159,19 @@ export default function HomeScreen() {
           fixturePath: 'docs/fixtures/spotify/me.json',
         });
       } else {
-        console.warn('Failed to fetch /v1/me:', await meResponse.text());
+        const errorText = await meResponse.text();
+        console.warn('Failed to fetch /v1/me:', errorText);
+        // Show failed API call in UI for debugging
+        payloads.push({
+          label: 'Spotify: User Profile (FAILED)',
+          data: {
+            error: `HTTP ${meResponse.status}`,
+            statusText: meResponse.statusText,
+            response: errorText,
+            note: 'This API call failed - see error details above',
+          },
+          fixturePath: 'docs/fixtures/errors/spotify-me.json',
+        });
       }
 
       // Step 5: Fetch /v1/me/player/currently-playing
@@ -188,10 +200,19 @@ export default function HomeScreen() {
           fixturePath: 'docs/fixtures/spotify/currently-playing.json',
         });
       } else {
-        console.warn(
-          'Failed to fetch /currently-playing:',
-          await currentlyPlayingResponse.text()
-        );
+        const errorText = await currentlyPlayingResponse.text();
+        console.warn('Failed to fetch /currently-playing:', errorText);
+        // Show failed API call in UI for debugging
+        payloads.push({
+          label: 'Spotify: Currently Playing (FAILED)',
+          data: {
+            error: `HTTP ${currentlyPlayingResponse.status}`,
+            statusText: currentlyPlayingResponse.statusText,
+            response: errorText,
+            note: 'This API call failed - see error details above',
+          },
+          fixturePath: 'docs/fixtures/errors/spotify-currently-playing.json',
+        });
       }
 
       setSpotifyPayloads(payloads);
@@ -301,14 +322,19 @@ export default function HomeScreen() {
   const renderPayloadCard = (payload: PayloadSection, index: number, service: string) => {
     const key = `${service}-${index}`;
     const isCollapsed = collapsed[key] !== false; // Default to collapsed
+    const isFailed = payload.label.includes('FAILED');
 
     return (
-      <View key={key} style={styles.payloadCard}>
-        <View style={styles.payloadHeader}>
+      <View key={key} style={[styles.payloadCard, isFailed && styles.payloadCardError]}>
+        <View style={[styles.payloadHeader, isFailed && styles.payloadHeaderError]}>
           <View style={styles.payloadHeaderLeft}>
-            <Text style={styles.payloadService}>{service === 'spotify' ? '🎵' : '🍎'}</Text>
+            <Text style={styles.payloadService}>
+              {isFailed ? '⚠️' : service === 'spotify' ? '🎵' : '🍎'}
+            </Text>
             <View style={styles.payloadTitleContainer}>
-              <Text style={styles.payloadLabel}>{payload.label}</Text>
+              <Text style={[styles.payloadLabel, isFailed && styles.payloadLabelError]}>
+                {payload.label}
+              </Text>
               <Text style={styles.fixturePathText}>{payload.fixturePath}</Text>
             </View>
           </View>
@@ -523,12 +549,19 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  payloadCardError: {
+    backgroundColor: '#fff5f5',
+    borderColor: '#ef5350',
+  },
   payloadHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
     backgroundColor: '#fff',
+  },
+  payloadHeaderError: {
+    backgroundColor: '#ffebee',
   },
   payloadHeaderLeft: {
     flexDirection: 'row',
@@ -547,6 +580,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
     marginBottom: 2,
+  },
+  payloadLabelError: {
+    color: '#c62828',
   },
   fixturePathText: {
     fontSize: 11,
