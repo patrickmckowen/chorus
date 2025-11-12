@@ -59,7 +59,8 @@ npm start
 **Option 2: Development Build on Device**
 ```bash
 # Build and install development client on connected device
-npm run ios -- --device
+npx expo run:ios --device
+npx expo start
 
 # Or specify device by name
 npm run ios -- --device="Patrick's iPhone"
