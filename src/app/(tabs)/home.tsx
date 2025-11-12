@@ -99,6 +99,11 @@ export default function HomeScreen() {
       });
 
       if (result.type !== 'success') {
+        // User cancelled or dismissed the auth flow
+        if (result.type === 'cancel' || result.type === 'dismiss') {
+          setLoading(false);
+          return; // Exit silently, don't show error
+        }
         throw new Error(`Auth failed: ${result.type}`);
       }
 
@@ -190,7 +195,10 @@ export default function HomeScreen() {
       }
 
       setSpotifyPayloads(payloads);
-      Alert.alert('✓ Success', 'Spotify auth complete! Use copy buttons to save payloads.');
+      Alert.alert(
+        '✓ Success',
+        `Captured ${payloads.length} Spotify payload(s)!\n\nTap each card to expand, then use the Copy JSON buttons to save to fixture files.`
+      );
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : JSON.stringify(err);
       console.error('Spotify auth error:', errorMessage);
