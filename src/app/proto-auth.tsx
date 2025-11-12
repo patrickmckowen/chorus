@@ -48,24 +48,19 @@ export default function ProtoAuthScreen() {
 
       console.log('Spotify Redirect URI:', redirectUri);
 
-      // Step 1: Generate PKCE code verifier and challenge
-      const codeVerifier = AuthSession.generateCodeAsync();
-      const codeChallenge = await AuthSession.deriveChallengeAsync(codeVerifier);
-
-      // Step 2: Start authorization flow
-      const authUrl = AuthSession.buildAuthUrl({
+      // Step 1: Create auth request with PKCE
+      const request = new AuthSession.AuthRequest({
         clientId,
         redirectUri,
         responseType: AuthSession.ResponseType.Code,
         scopes: SPOTIFY_SCOPES,
         usePKCE: true,
         codeChallengeMethod: AuthSession.CodeChallengeMethod.S256,
-        codeChallenge,
       });
 
-      const result = await AuthSession.startAsync({
-        authUrl,
-        returnUrl: redirectUri,
+      // Step 2: Start authorization flow
+      const result = await request.promptAsync({
+        authorizationEndpoint: SPOTIFY_AUTH_ENDPOINT,
       });
 
       if (result.type !== 'success') {
@@ -88,7 +83,7 @@ export default function ProtoAuthScreen() {
           grant_type: 'authorization_code',
           code: authCode,
           redirect_uri: redirectUri,
-          code_verifier: await codeVerifier,
+          code_verifier: request.codeVerifier || '',
         }).toString(),
       });
 
