@@ -1,197 +1,262 @@
-# AGENTS.md — Chorus App Development Context
+# AGENTS.md — Chorus App Development Guide
 
-## Purpose
-This document provides persistent, high-level context for coding agents contributing to the **Chorus** project — a cross-platform social music app that connects users from Spotify and Apple Music. It ensures alignment on technical direction, architecture, and conventions, while allowing flexibility for evolving UX and UI decisions.
+## 0. Purpose of this Document
 
----
+This file gives agents enough context to **build the foundations of Chorus** without guessing the final UX.
 
-## Core Concept
-Chorus enables users to **see what their friends are listening to** across music services. It aggregates real-time playback data from Spotify and Apple Music, normalizes it, and displays it in an activity feed that can be shared with groups (friends, family, or work circles).
+Right now, our focus is **designing with real data** — not shipping final features.
 
-Agents should assume the following:
-- The UX and visuals may iterate frequently.
-- API integrations, data models, and event flow should be built with **extensibility and modularity** in mind.
+This means:
 
----
+- Get **real listening history** from Spotify and Apple Music into our system.
+- Expose that data in simple screens (Profile, Home, Playground).
+- Use those screens to explore and decide the actual UX later.
 
-## Architectural Principles
-1. **Cross-Platform First:**
-   - Use **React Native (Expo)** on the new architecture for unified development.
-   - Keep native-specific logic minimal and well-isolated (e.g., platform conditionals only in service wrappers).
-   - Use **Expo Router** for file-based routing — simpler, more maintainable than imperative navigation.
-
-2. **Decoupled Data Layer:**
-   - Each music service (Spotify, Apple Music) should have its own data provider with a common interface.
-   - The backend normalization layer should abstract differences between APIs.
-   - All agents must assume new providers (e.g., YouTube Music) could be added later.
-
-3. **Real-Time Synchronization:**
-   - Use **Supabase Realtime** for presence and updates.
-   - Prefer **WebSocket or Supabase Realtime subscriptions** for live activity feed sync.
-
-4. **Serverless/Edge-Ready Backend:**
-   - The backend should be modular — deployable on Supabase Edge Functions or Node-based microservices.
-   - Avoid heavy persistent servers.
-   - Shared utils (e.g., data normalization, track metadata mapping) should be portable between client and backend.
-
-5. **Authentication & Linking:**
-   - Support both Spotify OAuth and Apple MusicKit authentication.
-   - Store only minimal, non-sensitive playback info.
-   - Respect user privacy — the user explicitly opts in to share now-playing data.
-
-6. **Scalability:**
-   - Architect for small-group sharing first.
-   - Keep data fetches and updates efficient — optimize for mobile data and battery.
-   - Use pagination and caching in the feed.
+Only work on things explicitly described here.
 
 ---
 
-## Code Organization
-**Current Structure:**
-- **/src/app/** → Expo Router file-based routes
-  - **_layout.tsx** → Root layout with auth protection
-  - **index.tsx** → Entry point with redirect logic
-  - **(auth)/** → Unauthenticated route group (welcome, sign-in)
-  - **(tabs)/** → Protected tab route group (home, profile)
-- **/src/features/** → Independent app modules (Auth implemented, Groups/Feed planned)
-  - **/auth/** → Authentication helpers and session management
-- **/src/lib/** → Utilities and configuration (Supabase client, config)
-- **/src/components/** → Shared UI primitives (cards, list items, avatars, buttons)
-- **/src/hooks/** → Custom React hooks
-- **/src/theme/** → Theming configuration and styles
+## 1. App Goal (User Experience POV)
 
-**Legacy (to be removed):**
-- **/src/navigation/** → Old React Navigation setup (deprecated)
-- **/src/screens/** → Old screen components (being migrated to /app routes)
+Chorus is a **social music app**.
 
-**Planned Structure:**
-- **/src/services/** → Integrations (Spotify, Apple Music API clients)
-- **/functions/** → Supabase Edge Functions or serverless backend functions
+From the user’s perspective, the eventual goal is:
+
+> “I connect my Spotify and/or Apple Music once, keep listening in my normal apps, and Chorus shows my listening history in a way that makes it easy to explore my own habits and (later) see what friends are listening to.”
+
+For **this phase**, the UX goal is narrower:
+
+- When I open Chorus:
+  - I can **sync** my latest listening from Spotify and/or Apple Music.
+  - I can **see my own listening history** as a simple list on my **Profile**.
+  - I can **see a basic feed** of listening events on a **Home** screen (initially just me, then optionally multiple test users).
+- The UI can be simple and text-based. The important part is:
+  - It’s **real data**.
+  - It’s easy to iterate on layout and components.
+
+We are not defining the final visual design yet.  
+We are building a **playground** to explore it with live data.
 
 ---
 
-## Data Model Overview
+## 2. High-Level Technical Approach
+
+### 2.1 Platform & Stack
+
+- **Platform:** iOS only.
+- **App:** React Native with **Expo** (new architecture).
+- **Navigation:** **Expo Router**.
+- **Backend:** **Supabase** (Auth, Postgres, simple REST/RPC).
+- **Storage:** Supabase Postgres + client-side AsyncStorage where needed.
+
+### 2.2 Data Strategy: Design With Data
+
+We want to **capture real listening events** as simply as possible and use them to prototype UI.
+
+Key idea:  
+**One append-only event log, no analytics yet.**
+
+#### Core Table: `TrackActivity`
+
 ```ts
-User {
-  id: string;
-  displayName: string;
-  avatarUrl?: string;
-  linkedServices: {
-    spotify?: { accessToken: string; refreshToken: string };
-    appleMusic?: { musicUserToken: string };
-  };
-  groups: string[]; // group IDs
-}
-
 TrackActivity {
-  id: string;
-  userId: string;
-  trackName: string;
-  artistName: string;
-  albumArtUrl: string;
-  source: 'spotify' | 'appleMusic';
-  timestamp: number;
-}
-
-Group {
-  id: string;
-  name: string;
-  memberIds: string[];
-  createdAt: number;
+  id: string;               // uuid
+  userId: string;           // Chorus user id
+  service: 'spotify' | 'appleMusic';
+  serviceTrackId: string;   // raw ID from Spotify/Apple Music
+  playedAt: number | null;  // ms epoch; Spotify = real time, Apple = null
+  insertedAt: number;       // when Chorus stored the event
 }
 ```
 
----
+- One row per listening event.
+- Do not collapse repeat plays.
 
-## Development Guidelines
-- Maintain **TypeScript-first** codebase.
-- Use **Zustand or React Context** for state management (no Redux).
-- Prefer **functional components** and **React Hooks**.
-- Follow **modular commits** and clear PR descriptions for agent traceability.
-- Use **ESLint + Prettier** with shared config.
+**playedAt**:
 
----
+- Spotify: use the timestamp from /recently-played.
+- Apple Music: we do not try to fake a timestamp; keep null for now.
 
-## Environment & Dependencies
-**Currently Installed:**
-- **Expo SDK ~54.0** with new architecture enabled (`newArchEnabled: true`)
-- **React 19.1.0** and **React Native 0.81.5**
-- **Expo Router ~6.0** for file-based routing and navigation
-- **React Native Reanimated v4** for animations
-- **TypeScript 5.9** with strict mode
-- **ESLint + Prettier** for code quality
-- **Supabase v2.80.0** for backend (Auth, Database, Realtime)
-- **expo-apple-authentication v8.0.7** for Apple Sign-In
-- **@react-native-async-storage/async-storage v2.2.0** for session persistence
+All future UX (feed design, popularity, group views, etc.) will be built on top of this table, not baked into it.
 
-**Planned (to be added):**
-- **Zustand** or **React Context** for global app state management
-- **Apple MusicKit JS** + **Spotify Web API** clients
-- **Node.js 20+** for Supabase Edge Functions
+### 2.3 Sync Model (For This Phase)
 
----
+- We are not building server-side scheduling or background jobs yet.
 
-## Key Commands
-```bash
-# Start Expo development server
-npm run start
+- For now, sync is:
+  - Client-triggered:
+    - On app open
+    - On “Sync Now” actions
 
-# Run on iOS simulator
-npm run ios
+- Flow:
+  1. User authenticates with Spotify and/or Apple Music.
+  2. User taps “Sync” (or app opens and triggers a fetch).
+  3. App:
+     - Calls provider APIs for recently played.
+     - Normalizes responses to TrackActivity[].
+     - Writes new events to Supabase.
+  4. Screens (Profile, Home, Playground) read from Supabase and render.
 
-# Run on Android
-npm run android
+Later, we can add server-side cron/background sync, but it’s out of scope for this phase.
 
-# Run on web
-npm run web
+## 3. Technical Constraints to Design For
 
-# Lint code
-npm run lint
+### iOS-Only, Native Feel
 
-# Run tests
-npm run test
+Code is React Native / Expo, but interactions and performance should feel native on iOS.
 
-# Deploy Supabase Edge Functions (to be added when functions are set up)
-# npm run deploy:functions
-```
+### Spotify API Constraints
 
----
+Only last ~50 recently played tracks are available.
 
-## Principles for Agents
-1. **Autonomy with Context:** Agents should act independently but remain within architectural and data flow conventions.
-2. **Human-Readable Code:** Prioritize clarity and maintainability over brevity.
-3. **Graceful Degradation:** Handle partial data and API failures without crashes.
-4. **Extensibility:** Favor configuration-driven patterns (e.g., dynamic providers) over rigid logic.
-5. **Minimal UI Coupling:** Logic should be decoupled from visuals — expect design evolution.
+Must use OAuth with refresh tokens.
 
----
+We should fetch regularly when the user opens the app to avoid losing history, but do not over-engineer this yet.
 
-## Communication with Other Agents
-When creating or modifying a module:
-- Reference this `AGENTS.md` for context.
-- Add module-level `README.md` files where appropriate.
-- Document all exposed interfaces, types, and assumptions.
+### Apple Music API Constraints
 
----
+/v1/me/recent/played/tracks returns ordered items but no timestamps.
 
-## Next Steps for Agents
-1. ✅ Initialize the React Native app with Expo and new architecture
-2. ✅ Migrate to Expo Router with file-based routing
-3. ✅ Set up Supabase project and connection
-4. ✅ Implement Apple Sign-In with Supabase Auth
-5. ✅ Add session-based route protection
-6. ✅ Create Auth feature module in `/src/features/`
-7. Create service wrappers for Spotify and Apple Music in `/src/services/`
-8. Create Feed and Groups feature modules in `/src/features/`
-9. Set up global state management (Zustand or React Context)
-10. Prototype real-time activity feed with mock data
-11. Add group creation and invite mechanism
-12. Implement music service integrations (Spotify OAuth, Apple MusicKit)
-13. Add real-time playback tracking and feed updates
+Requires a developer token + a Music User Token.
 
----
+User tokens expire after some time; re-auth UX will be needed later (not now).
 
-**Last Updated:** November 2025
+### No Background Abuse
 
-This file should remain source-of-truth for all agents contributing to the Chorus app.
+Do not rely on background audio or unsupported hacks.
 
+Background tasks and cron scheduling are future work, not current.
+
+### Cost & Complexity
+
+Prefer client-triggered sync and simple Supabase usage.
+
+No complex jobs, no aggregates, no analytics tables yet.
+
+### Privacy
+
+User must explicitly link Spotify/Apple.
+
+We store only what’s needed for listening history UX.
+
+## 4. Big Unknown UX Questions (To Answer During Design Phase)
+
+These are open questions that should guide how we prototype UI using real data:
+
+- **How should a person’s listening history be structured?**
+  - Flat list?
+  - Grouped by day?
+  - Grouped by “sessions” of listening?
+
+- **How do we represent time with mixed data?**
+  - Spotify has exact timestamps; Apple doesn’t.
+  - What’s an honest, understandable way to show this in one UI?
+
+- **What does a compelling “Profile” look like when it’s just history?**
+  - Is a simple chronological list enough?
+  - Does grouping (by day, by mood, by source) matter?
+
+- **What shape should the Home screen have?**
+  - Is it just “my own feed” at first?
+  - How does it change when we add other users later?
+
+- **How dense or sparse should the feed be?**
+  - Do we show every single play?
+  - Do we need grouping or collapsing in the UI to make it readable?
+
+- **What are the most useful UI components for future social features?**
+  - Track rows?
+  - Session blocks?
+  - Day dividers?
+  - Minimal “avatar + track” summaries?
+
+The Playground and simple Profile/Home will exist to explore these questions using real TrackActivity data.
+
+## 5. High-Level To-Do List (Sequenced, Small Chunks)
+
+This is the work agents should follow, in order.
+
+Phase 1 — Get Real Data into the App
+
+- [ ] Spotify Auth & Local Fetch
+  - [ ] Implement Spotify OAuth.
+  - [ ] Call /v1/me/player/recently-played.
+  - [ ] Show raw JSON on a debug screen.
+
+- [ ] Apple Music Auth & Local Fetch (iOS)
+  - [ ] Implement MusicKit auth and get Music User Token.
+  - [ ] Call /v1/me/recent/played/tracks.
+  - [ ] Show raw JSON on a debug screen.
+
+- [ ] Normalization Layer
+  - [ ] Add small mapping functions:
+    - [ ] normalizeSpotifyRecentlyPlayed → TrackActivity[]
+    - [ ] normalizeAppleRecentlyPlayed → TrackActivity[]
+  - [ ] Add a debug screen that lists merged TrackActivity entries in plain text.
+
+- [ ] Local Diffing (Client)
+  - [ ] Cache “last seen” per service (in memory or AsyncStorage).
+  - [ ] On fetch:
+    - [ ] Filter out events already seen.
+    - [ ] Keep truly new events, including repeat plays.
+  - [ ] Show “New since last sync” list in a debug screen.
+
+Phase 2 — Store Data in Supabase
+
+- [ ] TrackActivity Table & Writes
+  - [ ] Create TrackActivity in Supabase with the fields defined above.
+  - [ ] From the app, after each fetch, insert new TrackActivity rows for the current user.
+
+- [ ] “My Activity (from DB)” screen
+  - [ ] Query recent rows for the logged-in user.
+  - [ ] Render as plain text list.
+
+Phase 3 — Design-With-Data Screens
+
+- [ ] Profile Screen v0 (Real Data, Simple UI)
+  - [ ] Create /profile screen.
+  - [ ] Query TrackActivity for the current user.
+  - [ ] Render a chronological (or day-grouped) list of events:
+    - [ ] service label
+    - [ ] track info (track name, artist if available)
+    - [ ] time or placeholder for Apple Music.
+
+- [ ] Home Screen v0 (Self Feed)
+  - [ ] Create /home screen.
+  - [ ] For now, use the same data as Profile, but treat it as a “feed”:
+    - [ ] Slightly different copy/layout is okay.
+    - [ ] If trivial, allow an experiment where Home eventually uses multiple test users (hardcoded ids) to simulate a multi-user feed.
+
+- [ ] Sync Now Action
+  - [ ] On Profile, Home, and/or a global place, add a “Sync Now” button.
+  - [ ] Behavior:
+    - [ ] Run provider fetch → normalize → insert to DB.
+    - [ ] Refresh the screen data.
+  - [ ] This creates a tight loop to test UI with fresh listens.
+
+- [ ] Playground Screen
+  - [ ] Add a /playground route (dev only).
+  - [ ] It should:
+    - [ ] Load TrackActivity for one or more users.
+    - [ ] Render multiple experimental layouts/component variants on the same data.
+  - [ ] Goal: fast iteration on how to visually represent listening history.
+
+## 6. What Agents Should NOT Do (For Now)
+
+Do not implement:
+
+Popularity, trending, or “3 friends listened”.
+
+Aggregated tables or analytics views.
+
+Server-side scheduled sync (cron jobs).
+
+Background fetch/silent push logic.
+
+Complex social/graph features (groups, invites, etc.).
+
+Do not try to:
+
+Infer or fake timestamps for Apple Music plays.
+
+Collapse multiple plays of the same track into one entry in the database.
