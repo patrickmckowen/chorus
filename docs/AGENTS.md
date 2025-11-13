@@ -67,55 +67,45 @@ TrackActivity {
   playedAt: number | null;  // ms epoch; Spotify = real time, Apple = null
   insertedAt: number;       // when Chorus stored the event
 }
-One row per listening event.
+```
 
-Do not collapse repeat plays.
+- One row per listening event.
+- Do not collapse repeat plays.
 
-playedAt:
+**playedAt**:
 
-Spotify: use the timestamp from /recently-played.
-
-Apple Music: we do not try to fake a timestamp; keep null for now.
+- Spotify: use the timestamp from /recently-played.
+- Apple Music: we do not try to fake a timestamp; keep null for now.
 
 All future UX (feed design, popularity, group views, etc.) will be built on top of this table, not baked into it.
 
 ### 2.3 Sync Model (For This Phase)
 
-We are not building server-side scheduling or background jobs yet.
+- We are not building server-side scheduling or background jobs yet.
 
-For now, sync is:
+- For now, sync is:
+  - Client-triggered:
+    - On app open
+    - On “Sync Now” actions
 
-Client-triggered:
-
-On app open
-
-On “Sync Now” actions
-
-Flow:
-
-User authenticates with Spotify and/or Apple Music.
-
-User taps “Sync” (or app opens and triggers a fetch).
-
-App:
-
-Calls provider APIs for recently played.
-
-Normalizes responses to TrackActivity[].
-
-Writes new events to Supabase.
-
-Screens (Profile, Home, Playground) read from Supabase and render.
+- Flow:
+  1. User authenticates with Spotify and/or Apple Music.
+  2. User taps “Sync” (or app opens and triggers a fetch).
+  3. App:
+     - Calls provider APIs for recently played.
+     - Normalizes responses to TrackActivity[].
+     - Writes new events to Supabase.
+  4. Screens (Profile, Home, Playground) read from Supabase and render.
 
 Later, we can add server-side cron/background sync, but it’s out of scope for this phase.
 
 ## 3. Technical Constraints to Design For
 
-iOS-Only, Native Feel
+### iOS-Only, Native Feel
 
 Code is React Native / Expo, but interactions and performance should feel native on iOS.
 
-Spotify API Constraints
+### Spotify API Constraints
 
 Only last ~50 recently played tracks are available.
 
@@ -123,7 +113,7 @@ Must use OAuth with refresh tokens.
 
 We should fetch regularly when the user opens the app to avoid losing history, but do not over-engineer this yet.
 
-Apple Music API Constraints
+### Apple Music API Constraints
 
 /v1/me/recent/played/tracks returns ordered items but no timestamps.
 
@@ -131,19 +121,19 @@ Requires a developer token + a Music User Token.
 
 User tokens expire after some time; re-auth UX will be needed later (not now).
 
-No Background Abuse
+### No Background Abuse
 
 Do not rely on background audio or unsupported hacks.
 
 Background tasks and cron scheduling are future work, not current.
 
-Cost & Complexity
+### Cost & Complexity
 
 Prefer client-triggered sync and simple Supabase usage.
 
 No complex jobs, no aggregates, no analytics tables yet.
 
-Privacy
+### Privacy
 
 User must explicitly link Spotify/Apple.
 
@@ -153,47 +143,32 @@ We store only what’s needed for listening history UX.
 
 These are open questions that should guide how we prototype UI using real data:
 
-How should a person’s listening history be structured?
+- **How should a person’s listening history be structured?**
+  - Flat list?
+  - Grouped by day?
+  - Grouped by “sessions” of listening?
 
-Flat list?
+- **How do we represent time with mixed data?**
+  - Spotify has exact timestamps; Apple doesn’t.
+  - What’s an honest, understandable way to show this in one UI?
 
-Grouped by day?
+- **What does a compelling “Profile” look like when it’s just history?**
+  - Is a simple chronological list enough?
+  - Does grouping (by day, by mood, by source) matter?
 
-Grouped by “sessions” of listening?
+- **What shape should the Home screen have?**
+  - Is it just “my own feed” at first?
+  - How does it change when we add other users later?
 
-How do we represent time with mixed data?
+- **How dense or sparse should the feed be?**
+  - Do we show every single play?
+  - Do we need grouping or collapsing in the UI to make it readable?
 
-Spotify has exact timestamps; Apple doesn’t.
-
-What’s an honest, understandable way to show this in one UI?
-
-What does a compelling “Profile” look like when it’s just history?
-
-Is a simple chronological list enough?
-
-Does grouping (by day, by mood, by source) matter?
-
-What shape should the Home screen have?
-
-Is it just “my own feed” at first?
-
-How does it change when we add other users later?
-
-How dense or sparse should the feed be?
-
-Do we show every single play?
-
-Do we need grouping or collapsing in the UI to make it readable?
-
-What are the most useful UI components for future social features?
-
-Track rows?
-
-Session blocks?
-
-Day dividers?
-
-Minimal “avatar + track” summaries?
+- **What are the most useful UI components for future social features?**
+  - Track rows?
+  - Session blocks?
+  - Day dividers?
+  - Minimal “avatar + track” summaries?
 
 The Playground and simple Profile/Home will exist to explore these questions using real TrackActivity data.
 
