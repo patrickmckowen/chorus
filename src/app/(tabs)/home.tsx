@@ -27,9 +27,11 @@ const SPOTIFY_SCOPES = [
   'user-read-private',
 ];
 
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+
 type PayloadSection = {
   label: string;
-  data: any;
+  data: JsonValue;
   fixturePath: string;
 };
 
@@ -63,7 +65,7 @@ export default function HomeScreen() {
     setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const copyToClipboard = (data: any, label: string) => {
+  const copyToClipboard = (data: JsonValue, label: string) => {
     const jsonString = JSON.stringify(data, null, 2);
     Clipboard.setString(jsonString);
     Alert.alert('Copied', `${label} copied to clipboard`);
