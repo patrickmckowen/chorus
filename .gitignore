@@ -16,6 +16,7 @@ yarn-error.log*
 
 # dependencies
 node_modules/
+.npm/
 
 # Expo
 .expo/
