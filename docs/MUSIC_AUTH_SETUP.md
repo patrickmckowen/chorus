@@ -110,10 +110,13 @@ This screen provides buttons to run the Spotify and Apple Music debug flows and 
 #### Apple Music Flow
 
 1. Tap **"Run Apple Music Debug Flow"** button on the music auth debug screen
-2. Review the API structure information (full implementation requires native MusicKit)
+2. On a properly configured iOS simulator/device (signed into Apple Music with a valid subscription/history), the app will:
+   - Use a native Expo Module (`AppleMusicAuth`) backed by **MusicKit** to request authorization
+   - Obtain a **Music User Token** using your JS-owned developer token
+   - Call `/v1/me/recent/played/tracks` with both tokens to fetch your recent plays
 3. Tap each payload card to expand and review the JSON
 4. Tap **"📋 Copy JSON"** button on each card to copy to clipboard
-5. Paste and save to the corresponding fixture file shown in the card:
+5. Paste and save to the corresponding fixture file shown in the card (structure + metadata only, no raw tokens):
    - `docs/fixtures/appleMusic/authorize.json`
    - `docs/fixtures/appleMusic/recent-played.json`
    - `docs/fixtures/appleMusic/catalog-search.json`
