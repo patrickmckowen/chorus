@@ -178,10 +178,10 @@ This is the work agents should follow, in order.
 
 Phase 1 — Get Real Data into the App
 
-- [ ] Spotify Auth & Local Fetch
-  - [ ] Implement Spotify OAuth.
-  - [ ] Call /v1/me/player/recently-played.
-  - [ ] Show raw JSON on a debug screen.
+- [x] Spotify Auth & Local Fetch
+  - [x] Implement Spotify OAuth.
+  - [x] Call /v1/me/player/recently-played.
+  - [x] Show raw JSON on a debug screen.
 
 - [ ] Apple Music Auth & Local Fetch (iOS)
   - [ ] Implement MusicKit auth and get Music User Token.
