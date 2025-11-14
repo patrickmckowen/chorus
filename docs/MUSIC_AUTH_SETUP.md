@@ -2,7 +2,7 @@
 
 ## Overview
 
-The music authentication prototype has been implemented in `src/app/proto-auth.tsx`. This guide covers the setup steps needed to test the Spotify and Apple Music authentication flows.
+The music authentication prototype is available on a dedicated debug screen at `src/app/debug/music-auth.tsx`. This guide covers the setup steps needed to test the Spotify and Apple Music authentication flows and capture raw JSON payloads for fixtures.
 
 ## Prerequisites
 
@@ -86,13 +86,18 @@ npm run ios
 
 ### 3. Access Testing Interface
 
-The home screen now includes the music auth testing interface - simply tap the service buttons to begin testing.
+From the authenticated app, navigate to the music auth debug screen:
+
+- Route: `/debug/music-auth`
+- File: `src/app/debug/music-auth.tsx`
+
+This screen provides buttons to run the Spotify and Apple Music debug flows and displays all captured payloads as collapsible JSON cards.
 
 ### 4. Test Authentication Flows
 
 #### Spotify Flow
 
-1. Tap **"Connect Spotify"** button on the home screen
+1. Tap **"Run Spotify Debug Flow"** button on the music auth debug screen
 2. Complete the OAuth flow in the browser
 3. View the success message and returned payload cards
 4. Tap each payload card to expand and review the JSON
@@ -104,7 +109,7 @@ The home screen now includes the music auth testing interface - simply tap the s
 
 #### Apple Music Flow
 
-1. Tap **"Connect Apple Music"** button on the home screen
+1. Tap **"Run Apple Music Debug Flow"** button on the music auth debug screen
 2. Review the API structure information (full implementation requires native MusicKit)
 3. Tap each payload card to expand and review the JSON
 4. Tap **"📋 Copy JSON"** button on each card to copy to clipboard
@@ -152,28 +157,27 @@ err instanceof Error ? err.message : JSON.stringify(err)
 
 ## Next Steps
 
-1. Complete authentication flows and capture payloads using the home screen
+1. Complete authentication flows and capture payloads using the music auth debug screen
 2. Review captured data in `docs/fixtures/`
 3. Identify stable fields for the normalized `TrackActivity` interface
 4. Design the data model based on both services' responses
-5. Remove auth testing code from home screen after fixtures are complete
-6. Scaffold `/src/services/spotify` and `/src/services/appleMusic` with shared interfaces
+5. Keep the debug screen available for development until the normalization and TrackActivity-based flows are stable
+6. Evolve `/src/services/music/spotify.ts` and `/src/services/music/appleMusic.ts` into reusable service modules for production flows
 
 ## Files Modified
 
-- ✅ `src/app/(tabs)/home.tsx` - Consolidated auth testing interface with enhanced UX
-- ✅ `src/lib/config.ts` - Added Spotify and Apple Music config
-- ✅ `app.config.ts` - Added Spotify redirect URI
-- ✅ `docs/fixtures/` - Directory structure for payloads (NEW)
-- ✅ `package.json` - Added expo-auth-session dependency
-- ❌ `src/app/proto-auth.tsx` - Deleted (functionality moved to home.tsx)
+- ✅ `src/app/debug/music-auth.tsx` - Dedicated music auth debug screen
+- ✅ `src/app/(tabs)/home.tsx` - Restored to a simple home screen with a link to the debug screen
+- ✅ `src/lib/config.ts` - Spotify and Apple Music config
+- ✅ `app.config.ts` - Spotify redirect URI
+- ✅ `docs/fixtures/` - Directory structure for payloads
+- ✅ `package.json` - `expo-auth-session` dependency
 
 ## Cleanup Reminder
 
-**After capturing fixtures:**
-- Remove auth testing code from `src/app/(tabs)/home.tsx` (restore to simple home screen)
-- Remove music service config from `.env` (if no longer needed for development)
-- Keep fixture files for reference during service implementation
+**After capturing fixtures and stabilizing the normalization layer:**
+- You may choose to keep `src/app/debug/music-auth.tsx` for ongoing diagnostics, or remove it if no longer needed.
+- Keep fixture files in `docs/fixtures/` for reference during service implementation and testing.
 
 ---
 
