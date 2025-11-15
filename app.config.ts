@@ -20,6 +20,10 @@ export default ({ config }: { config: ExpoConfig }) => ({
     supportsTablet: true,
     bundleIdentifier: 'com.patrickmckowen.chorus',
     usesAppleSignIn: true,
+    deploymentTarget: '15.0',
+    infoPlist: {
+      NSAppleMusicUsageDescription: 'Chorus uses Apple Music to read your listening history so we can show your music profile.',
+    },
   },
   android: {
     adaptiveIcon: {
@@ -34,7 +38,11 @@ export default ({ config }: { config: ExpoConfig }) => ({
     favicon: './assets/favicon.png',
   },
   scheme: 'chorus',
-  plugins: ['expo-apple-authentication', 'expo-router'],
+  plugins: [
+    'expo-apple-authentication',
+    'expo-router',
+    './plugins/with-music-kit',
+  ],
   extra: {
     API_URL: process.env.API_URL ?? 'https://example.com',
     spotifyRedirectUri: 'chorus://oauthredirect',
