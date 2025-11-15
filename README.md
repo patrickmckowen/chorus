@@ -74,16 +74,30 @@ npm run ios -- --device="Patrick's iPhone"
 
 #### MusicKit Setup (Required for Apple Music features)
 
-To enable MusicKit functionality, you **must** configure your App ID in the Apple Developer Portal:
+**Step 1: Enable MusicKit in Apple Developer Portal (Manual - Required)**
+
+This must be done manually in the Apple Developer Portal (no CLI option):
 
 1. Go to [Apple Developer Portal](https://developer.apple.com/account/resources/identifiers/list) → **Certificates, Identifiers & Profiles** → **Identifiers**
 2. Find your App ID: `com.patrickmckowen.chorus`
 3. Click to edit the App ID
 4. Under **Capabilities**, enable **MusicKit**
 5. Click **Save**
-6. Regenerate/download your provisioning profiles:
-   - Go to **Profiles** → Find your development profile → **Edit** → **Generate**
-   - Or let Xcode automatically manage profiles (recommended for development)
+
+**Step 2: Let Xcode Auto-Manage Provisioning Profiles (Automatic)**
+
+When you run `expo run:ios`, Xcode will automatically:
+- Detect the MusicKit entitlement requirement
+- Create/update provisioning profiles with MusicKit enabled
+- Handle code signing automatically
+
+**To enable auto-management in Xcode:**
+1. Open `ios/chorus.xcworkspace` in Xcode (after running `npx expo prebuild`)
+2. Select the **chorus** project → **chorus** target → **Signing & Capabilities**
+3. Ensure **"Automatically manage signing"** is checked
+4. Select your Team from the dropdown
+
+**Step 3: Build and Run**
 
 After enabling MusicKit in the portal, run:
 ```bash
@@ -91,10 +105,13 @@ npx expo prebuild --clean
 npx expo run:ios --device
 ```
 
+Xcode will automatically handle provisioning profile updates when it detects the MusicKit entitlement.
+
 **Important:** MusicKit requires:
 - iOS 15.0+ deployment target (already configured)
 - A **real iOS device** (MusicKit doesn't work on simulator)
-- MusicKit enabled in Apple Developer Portal (see above)
+- MusicKit enabled in Apple Developer Portal (manual step above)
+- Xcode auto-signing enabled (handles provisioning automatically)
 
 ### Troubleshooting
 
