@@ -45,7 +45,8 @@ public class AppleMusicAuthModule: Module {
       }
 
       do {
-        let token = try await MusicUserTokenProvider.userToken(for: trimmedToken)
+        let provider = MusicUserTokenProvider()
+        let token = try await provider.userToken(for: trimmedToken, options: [])
         return token
       } catch {
         throw Exception(
