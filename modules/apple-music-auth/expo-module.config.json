@@ -1,7 +1,8 @@
 {
   "platforms": ["ios"],
   "ios": {
-    "modules": ["AppleMusicAuthModule"]
+    "modules": ["AppleMusicAuthModule"],
+    "podspecPath": "./AppleMusicAuth.podspec"
   }
 }
 
