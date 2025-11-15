@@ -59,6 +59,7 @@ npm start
 **Option 2: Development Build on Device**
 ```bash
 # Build and install development client on connected device
+npx expo prebuild --clean
 npx expo run:ios --device
 npx expo start
 
@@ -70,6 +71,30 @@ npm run ios -- --device="Patrick's iPhone"
 - Configure code signing in Xcode
 - Register your device in Apple Developer Portal (for non-simulator builds)
 - Trust the developer certificate on your device (Settings > General > VPN & Device Management)
+
+#### MusicKit Setup (Required for Apple Music features)
+
+To enable MusicKit functionality, you **must** configure your App ID in the Apple Developer Portal:
+
+1. Go to [Apple Developer Portal](https://developer.apple.com/account/resources/identifiers/list) → **Certificates, Identifiers & Profiles** → **Identifiers**
+2. Find your App ID: `com.patrickmckowen.chorus`
+3. Click to edit the App ID
+4. Under **Capabilities**, enable **MusicKit**
+5. Click **Save**
+6. Regenerate/download your provisioning profiles:
+   - Go to **Profiles** → Find your development profile → **Edit** → **Generate**
+   - Or let Xcode automatically manage profiles (recommended for development)
+
+After enabling MusicKit in the portal, run:
+```bash
+npx expo prebuild --clean
+npx expo run:ios --device
+```
+
+**Important:** MusicKit requires:
+- iOS 15.0+ deployment target (already configured)
+- A **real iOS device** (MusicKit doesn't work on simulator)
+- MusicKit enabled in Apple Developer Portal (see above)
 
 ### Troubleshooting
 
