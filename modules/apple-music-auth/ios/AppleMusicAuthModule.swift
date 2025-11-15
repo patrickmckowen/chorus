@@ -1,3 +1,4 @@
+#if canImport(ExpoModulesCore)
 import ExpoModulesCore
 import MusicKit
 
@@ -74,4 +75,5 @@ private extension MusicAuthorization.Status {
     }
   }
 }
+#endif
 
