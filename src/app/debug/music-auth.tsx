@@ -92,15 +92,7 @@ export default function MusicAuthDebugScreen() {
         `Fetched Apple Music authorization metadata and recent played tracks.\n\nTap each card to expand, then use the Copy JSON buttons to save to fixture files.`
       );
     } catch (err) {
-      const errorCode =
-        err && typeof err === 'object' && 'code' in err ? String((err as any).code) : undefined;
       const errorMessage = err instanceof Error ? err.message : JSON.stringify(err);
-
-      // Treat user-denied auth as non-fatal (similar to Spotify cancel).
-      if (errorCode === 'APPLE_MUSIC_AUTH_DENIED') {
-        return;
-      }
-
       setError(`Apple Music Error: ${errorMessage}`);
     } finally {
       setLoading(false);
