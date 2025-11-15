@@ -36,19 +36,19 @@ function isNativeAppleMusicError(error: unknown): error is NativeAppleMusicError
     error &&
       typeof error === 'object' &&
       'code' in (error as Record<string, unknown>) &&
-      typeof (error as any).code === 'string'
+      typeof (error as Record<string, unknown>).code === 'string'
   );
 }
 
 function mapAppleMusicError(error: unknown): Error {
   if (isNativeAppleMusicError(error)) {
-    const code = (error as any).code as string;
+    const code = error.code as string;
 
     if (code === 'MusicKitNotAvailableException') {
       const friendlyError = new Error(
         'MusicKit is not available on this device. Use a real iOS device running iOS 15 or later.'
       );
-      (friendlyError as any).code = code;
+      (friendlyError as NativeAppleMusicError).code = code;
       return friendlyError;
     }
 
@@ -56,7 +56,7 @@ function mapAppleMusicError(error: unknown): Error {
       const friendlyError = new Error(
         'Apple Music developer token missing. Set EXPO_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN in your env file.'
       );
-      (friendlyError as any).code = code;
+      (friendlyError as NativeAppleMusicError).code = code;
       return friendlyError;
     }
 

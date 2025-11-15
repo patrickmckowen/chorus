@@ -1,15 +1,16 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { withEntitlementsPlist, withXcodeProject } = require("expo/config-plugins");
 
 function withMusicKit(config) {
   // 1. Add MusicKit entitlement (must also be enabled in Apple Dev Portal)
-  config = withEntitlementsPlist(config, (config) => {
-    config.modResults["com.apple.developer.music-user-token"] = true;
-    return config;
+  config = withEntitlementsPlist(config, (entitlementsConfig) => {
+    entitlementsConfig.modResults["com.apple.developer.music-user-token"] = true;
+    return entitlementsConfig;
   });
 
   // 2. Link the system MusicKit framework
-  config = withXcodeProject(config, (config) => {
-    const project = config.modResults;
+  config = withXcodeProject(config, (xcodeConfig) => {
+    const project = xcodeConfig.modResults;
     const framework = "MusicKit.framework";
     const frameworkPath = `System/Library/Frameworks/${framework}`;
 
@@ -18,7 +19,7 @@ function withMusicKit(config) {
       embed: false,
     });
 
-    return config;
+    return xcodeConfig;
   });
 
   return config;
