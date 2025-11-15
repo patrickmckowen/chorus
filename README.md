@@ -59,6 +59,7 @@ npm start
 **Option 2: Development Build on Device**
 ```bash
 # Build and install development client on connected device
+npx expo prebuild --clean
 npx expo run:ios --device
 npx expo start
 
@@ -70,6 +71,47 @@ npm run ios -- --device="Patrick's iPhone"
 - Configure code signing in Xcode
 - Register your device in Apple Developer Portal (for non-simulator builds)
 - Trust the developer certificate on your device (Settings > General > VPN & Device Management)
+
+#### MusicKit Setup (Required for Apple Music features)
+
+**Step 1: Enable MusicKit in Apple Developer Portal (Manual - Required)**
+
+This must be done manually in the Apple Developer Portal (no CLI option):
+
+1. Go to [Apple Developer Portal](https://developer.apple.com/account/resources/identifiers/list) → **Certificates, Identifiers & Profiles** → **Identifiers**
+2. Find your App ID: `com.patrickmckowen.chorus`
+3. Click to edit the App ID
+4. Under **Capabilities**, enable **MusicKit**
+5. Click **Save**
+
+**Step 2: Let Xcode Auto-Manage Provisioning Profiles (Automatic)**
+
+When you run `expo run:ios`, Xcode will automatically:
+- Detect the MusicKit entitlement requirement
+- Create/update provisioning profiles with MusicKit enabled
+- Handle code signing automatically
+
+**To enable auto-management in Xcode:**
+1. Open `ios/chorus.xcworkspace` in Xcode (after running `npx expo prebuild`)
+2. Select the **chorus** project → **chorus** target → **Signing & Capabilities**
+3. Ensure **"Automatically manage signing"** is checked
+4. Select your Team from the dropdown
+
+**Step 3: Build and Run**
+
+After enabling MusicKit in the portal, run:
+```bash
+npx expo prebuild --clean
+npx expo run:ios --device
+```
+
+Xcode will automatically handle provisioning profile updates when it detects the MusicKit entitlement.
+
+**Important:** MusicKit requires:
+- iOS 15.0+ deployment target (already configured)
+- A **real iOS device** (MusicKit doesn't work on simulator)
+- MusicKit enabled in Apple Developer Portal (manual step above)
+- Xcode auto-signing enabled (handles provisioning automatically)
 
 ### Troubleshooting
 

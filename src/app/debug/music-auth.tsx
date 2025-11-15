@@ -88,8 +88,8 @@ export default function MusicAuthDebugScreen() {
       setAppleMusicPayloads(payloads);
 
       Alert.alert(
-        'Apple Music Info',
-        'Full Apple Music integration requires native MusicKit.\n\nThis screen shows the correct API structure and sample responses gathered using your developer token.'
+        '✓ Apple Music Success',
+        `Fetched Apple Music authorization metadata and recent played tracks.\n\nTap each card to expand, then use the Copy JSON buttons to save to fixture files.`
       );
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : JSON.stringify(err);

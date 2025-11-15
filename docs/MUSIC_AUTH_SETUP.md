@@ -1,12 +1,6 @@
 # Music Auth Prototype Setup Guide
 
-## Overview
-
-The music authentication prototype is available on a dedicated debug screen at `src/app/debug/music-auth.tsx`. This guide covers the setup steps needed to test the Spotify and Apple Music authentication flows and capture raw JSON payloads for fixtures.
-
-## Prerequisites
-
-### 1. Environment Variables
+## 1. Environment Variables
 
 Add the following to your `.env` file:
 
@@ -68,6 +62,11 @@ EXPO_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN=your-apple-music-developer-token
 6. Add the developer token to `.env` as `EXPO_PUBLIC_APPLE_MUSIC_DEVELOPER_TOKEN`
 7. Ensure your iOS device/simulator is signed in to Apple Music
 
+> **MusicKit requirements**
+> - Enable the **MusicKit** capability for your app’s bundle identifier in the Apple Developer portal.
+> - Set the Expo iOS deployment target to **15.0+** (`app.config.*`).
+> - Use a real iOS device for debugging; MusicKit token retrieval does **not** work on the simulator.
+
 ## Running the Prototype
 
 ### 1. Install Dependencies
@@ -110,11 +109,15 @@ This screen provides buttons to run the Spotify and Apple Music debug flows and 
 #### Apple Music Flow
 
 1. Tap **"Run Apple Music Debug Flow"** button on the music auth debug screen
-2. Review the API structure information (full implementation requires native MusicKit)
+2. On a properly configured iOS simulator/device (signed into Apple Music with a valid subscription/history), the app will:
+   - Use a native Expo Module (`AppleMusicAuth`) backed by **MusicKit** to request authorization
+   - Obtain a **Music User Token** using your JS-owned developer token
+   - Call `/v1/me/recent/played/tracks` with both tokens to fetch your recent plays
 3. Tap each payload card to expand and review the JSON
 4. Tap **"📋 Copy JSON"** button on each card to copy to clipboard
-5. Paste and save to the corresponding fixture file shown in the card:
+5. Paste and save to the corresponding fixture file shown in the card (structure + metadata only, no raw tokens):
    - `docs/fixtures/appleMusic/authorize.json`
+   - `docs/fixtures/appleMusic/user-token.json`
    - `docs/fixtures/appleMusic/recent-played.json`
    - `docs/fixtures/appleMusic/catalog-search.json`
 
@@ -141,12 +144,11 @@ If any errors occur, copy the error payloads to:
 
 ### Apple Music Authentication
 
-- Requires native MusicKit implementation for full functionality
-- Shows proper API call structure for reference
-- In production:
-  1. Configure MusicKit with developer token
-  2. Call `MusicKit.authorize()` to get music user token
-  3. Use both tokens to fetch user data from `/v1/me/recent/played/tracks`
+- Uses a native Expo module (`AppleMusicAuth`) that splits work into:
+  1. `requestAuthorization()` → wraps `MusicAuthorization.request()` and reports status
+  2. `getUserToken(developerToken)` → calls `MusicUserTokenProvider.userToken(for:)`
+- Both functions require a real iOS 15+ device with MusicKit entitlement enabled
+- Debug flow then calls `/v1/me/recent/played/tracks` and `catalog/.../search` with the returned Music User Token
 
 ### Error Handling
 
